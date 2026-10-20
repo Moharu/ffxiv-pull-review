@@ -1,4 +1,5 @@
 import RecordingContextForm from './RecordingContextForm'
+import VideoReview from './VideoReview'
 
 function App() {
   return (
@@ -9,6 +10,7 @@ function App() {
         Review your raid POV, record feedback at key moments, and choose
         priorities for your next pulls.
       </p>
+      <VideoReview />
       <RecordingContextForm />
     </main>
   )

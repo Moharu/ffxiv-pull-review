@@ -1,4 +1,5 @@
 import { useState } from "react"
+import Alert from "./Alert"
 
 const combatJobs = [
   "Paladin", "Warrior", "Dark Knight", "Gunbreaker",
@@ -130,7 +131,7 @@ function RecordingContextForm() {
             onChange={(event) => setPullNotes(event.target.value)}
           />
         </div>
-        {error && <p role="alert">{error}</p>}
+        {error && <Alert>{error}</Alert>}
         <button type="submit">Save context</button>
       </form>
       {savedContext && (

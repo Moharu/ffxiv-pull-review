@@ -48,13 +48,38 @@ main > p:not(.eyebrow) {
   color: #40578a;
 }
 
-.context-card {
+.context-card,
+.video-review {
   margin-top: 2rem;
   padding: clamp(1.25rem, 4vw, 2.25rem);
   background: white;
   border: 1px solid #d5dce8;
   border-radius: 1rem;
   box-shadow: 0 8px 32px #202b3c08;
+}
+
+.video-review label {
+  display: block;
+  margin: 1rem 0 0.5rem;
+  font-weight: 600;
+}
+
+.video-review input[type="file"] {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  font: inherit;
+}
+
+.video-review video {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 70vh;
+  margin-top: 1.25rem;
+  background: #101827;
+  border-radius: 0.5rem;
+  object-fit: contain;
 }
 
 .context-card form {
@@ -76,6 +101,7 @@ main > p:not(.eyebrow) {
 }
 
 .context-card input,
+.timestamp-editor input,
 .context-card select,
 .context-card textarea {
   display: block;
@@ -100,7 +126,8 @@ main > p:not(.eyebrow) {
   resize: vertical;
 }
 
-.context-card button {
+.context-card button,
+.video-review button {
   justify-self: start;
   min-height: 2.75rem;
   padding: 0.75rem 1.25rem;
@@ -113,11 +140,17 @@ main > p:not(.eyebrow) {
   cursor: pointer;
 }
 
-.context-card button:hover {
+.video-review button {
+  margin-top: 1rem;
+}
+
+.context-card button:hover,
+.video-review button:hover {
   background: #1d367b;
 }
 
-.context-card button:active {
+.context-card button:active,
+.video-review button:active {
   background: #15295e;
 }
 
@@ -126,7 +159,7 @@ main > p:not(.eyebrow) {
   outline-offset: 3px;
 }
 
-.context-card [role="alert"],
+.alert,
 .context-card [role="status"] {
   margin: 0;
   padding: 0.875rem 1rem;
@@ -135,10 +168,51 @@ main > p:not(.eyebrow) {
   overflow-wrap: anywhere;
 }
 
-.context-card [role="alert"] {
+.alert {
   color: #8d2630;
   background: #fff3f3;
   border-color: #dfadb2;
+}
+
+.timestamp-editor {
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #d5dce8;
+}
+
+.timestamp-editor input {
+  margin-top: 0.75rem;
+}
+
+.timestamp-editor .alert {
+  margin-top: 0.75rem;
+}
+
+.video-review > .alert {
+  margin-top: 1rem;
+}
+
+.timestamp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.75rem;
+}
+
+.video-review .remove-timestamp {
+  color: #8d2630;
+  background: #fff;
+  border-color: #8d2630;
+}
+
+.video-review .remove-timestamp:hover {
+  background: #fff3f3;
+}
+
+.video-review button:disabled {
+  background: #e2e7ef;
+  border-color: #8592a8;
+  color: #526078;
+  cursor: not-allowed;
 }
 
 .context-card [role="status"] {
@@ -149,7 +223,8 @@ main > p:not(.eyebrow) {
 }
 
 @media (max-width: 480px) {
-  .context-card button {
+  .context-card button,
+  .video-review button {
     width: 100%;
   }
 }

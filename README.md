@@ -4,6 +4,8 @@ A React/TypeScript portfolio project for reviewing the individual player whose P
 
 Start with the [project brief](docs/project-brief.md). Implementation proceeds one GitHub issue at a time, with explanations and small changes suitable for refreshing React knowledge.
 
+The [development journal](docs/development-journal.md) records decisions, learning, and how AI contributed.
+
 ## Development
 
 Use Node.js 24 LTS and npm. After setup:
@@ -28,3 +30,4 @@ Build runs TypeScript checks and creates the production bundle. GitHub Actions r
 - Prefer native HTML, plain CSS, and built-in React features before dependencies.
 - Keep supplied footage out of Git. Video selection is local; no upload is involved.
 - Each issue should leave a small, reviewable result and a short manual verification path.
+- At each issue completion, suggest a brief development-journal update covering decisions, developer input, learning, and verification.
