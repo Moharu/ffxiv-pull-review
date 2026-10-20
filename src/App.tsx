@@ -1,3 +1,5 @@
+import RecordingContextForm from './RecordingContextForm'
+
 function App() {
   return (
     <main>
@@ -7,13 +9,7 @@ function App() {
         Review your raid POV, record feedback at key moments, and choose
         priorities for your next pulls.
       </p>
-      <section aria-labelledby="next-step">
-        <h2 id="next-step">Start with the recording context</h2>
-        <p>
-          Next, we’ll add the encounter, POV player, and job before connecting
-          your recording.
-        </p>
-      </section>
+      <RecordingContextForm />
     </main>
   )
 }
