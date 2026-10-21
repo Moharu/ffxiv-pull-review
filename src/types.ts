@@ -1,9 +1,12 @@
-export type FeedbackCategory =
-  | "Mechanics"
-  | "Positioning"
-  | "Rotation"
-  | "Mitigation"
-  | "Other"
+export const feedbackCategories = [
+  "Mechanics",
+  "Positioning",
+  "Rotation",
+  "Mitigation",
+  "Other",
+] as const
+
+export type FeedbackCategory = (typeof feedbackCategories)[number]
 
 export type FeedbackEntry = {
   id: string

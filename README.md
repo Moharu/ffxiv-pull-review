@@ -19,10 +19,13 @@ Before submitting a change:
 
 ```sh
 npm run lint
+npm test
 npm run build
 ```
 
 Build runs TypeScript checks and creates the production bundle. GitHub Actions runs these same checks. Vercel deployment is a later project task.
+
+Tests use Vitest, React Testing Library, user-event, and jsdom. Run `npm run test:watch` for feedback while editing. See the [testing guide](docs/testing-guide.md) for the first test and the remaining exercises.
 
 ## Working agreement
 

@@ -1,34 +1,18 @@
 import { useEffect, useRef, useState } from "react"
-import type { ChangeEvent, SubmitEvent, SyntheticEvent } from "react"
+import type { ChangeEvent, SyntheticEvent } from "react"
 import Alert from "./Alert"
-import FeedbackForm from "./FeedbackForm"
+import FeedbackList from "./FeedbackList"
+import TimestampEditor from "./TimestampEditor"
 import type { FeedbackEntry } from "./types"
 
-function formatTimestamp(seconds: number): string {
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = Math.floor(seconds % 60)
-
-  return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`
-}
-
-function convertTimestampDraftToSeconds(draft: string): number | null {
-  const match = /^(\d+):([0-5]\d)$/.exec(draft.trim())
-
-  if (!match) return null
-
-  const seconds = Number(match[1]) * 60 + Number(match[2])
-
-  if (!Number.isFinite(seconds)) return null
-
-  return seconds
-}
+import { formatTimestamp } from "./utils/timestamps"
+import { validateFeedback } from "./utils/feedback"
 
 function VideoReview() {
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [timestamp, setTimestamp] = useState<number | null>(null)
   const [duration, setDuration] = useState<number | null>(null)
-  const [timestampDraft, setTimestampDraft] = useState("")
-  const [timestampError, setTimestampError] = useState("")
+  const [captureVersion, setCaptureVersion] = useState(0)
   const [videoError, setVideoError] = useState("")
   const [feedbackEntries, setFeedbackEntries] = useState<FeedbackEntry[]>([])
   const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -51,8 +35,6 @@ function VideoReview() {
 
   function clearTimestamp() {
     setTimestamp(null)
-    setTimestampDraft("")
-    setTimestampError("")
   }
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
@@ -88,35 +70,9 @@ function VideoReview() {
     const video = videoRef.current
     if (!video || video.readyState < 1 || video.error || videoError) return
 
-    setTimestamp(video.currentTime)
-    setTimestampDraft(formatTimestamp(video.currentTime))
-    setTimestampError("")
-  }
-
-  function handleTimestampSubmit(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (duration === null) return
-
-    const seconds = convertTimestampDraftToSeconds(timestampDraft)
-
-    if (seconds === null) {
-      setTimestampError("Enter a time in m:ss format, such as 1:35 or 01:35. Seconds must be between 00 and 59.")
-      return
-    }
-
-    if (seconds > duration) {
-      setTimestampError(`Enter a time between 0:00 and ${formatTimestamp(duration)}.`)
-      return
-    }
-
-    setTimestamp(seconds)
-    setTimestampDraft(formatTimestamp(seconds))
-    setTimestampError("")
-  }
-
-  function handleTimestampDraftChange(event: ChangeEvent<HTMLInputElement>) {
-    setTimestampDraft(event.target.value)
-    setTimestampError("")
+    setTimestamp(Math.floor(video.currentTime))
+    // Reset the editor draft on every capture, even at the same playback time.
+    setCaptureVersion((previous) => previous + 1)
   }
 
   function handleRemoveTimestamp() {
@@ -127,22 +83,29 @@ function VideoReview() {
   }
 
   function handleAddFeedback(entry: FeedbackEntry): string | null {
-    if (
-      duration === null ||
-      !Number.isFinite(entry.timestamp) ||
-      entry.timestamp < 0 ||
-      entry.timestamp > duration
-    ) {
-      return "Capture a valid timestamp within the recording before adding feedback."
-    }
+    const error = validateFeedback(entry, duration)
+    if (error) return error
 
     setFeedbackEntries((previous) => [...previous, entry])
     return null
   }
 
-  const sortedFeedbackEntries = [...feedbackEntries].sort(
-    (a, b) => a.timestamp - b.timestamp
-  )
+  function handleUpdateFeedback(updatedEntry: FeedbackEntry): string | null {
+    const error = validateFeedback(updatedEntry, duration)
+    if (error) return error
+    if (!feedbackEntries.some((entry) => entry.id === updatedEntry.id)) {
+      return "This feedback entry is no longer available."
+    }
+
+    setFeedbackEntries((previous) => previous.map((entry) =>
+      entry.id === updatedEntry.id ? updatedEntry : entry
+    ))
+    return null
+  }
+
+  function handleDeleteFeedback(id: string) {
+    setFeedbackEntries((previous) => previous.filter((entry) => entry.id !== id))
+  }
 
   function handleSeek(seconds: number) {
     const video = videoRef.current
@@ -200,64 +163,24 @@ function VideoReview() {
         {timestamp !== null && `Captured time: ${formatTimestamp(timestamp)}`}
       </p>
       {timestamp !== null && duration !== null && (
-        <form
-          className="timestamp-editor"
-          onSubmit={handleTimestampSubmit}
-        >
-          <label htmlFor="timestamp-input">Timestamp (m:ss)</label>
-          <p id="timestamp-help" className="form-hint">
-            Adjust the captured time from 0:00 to {formatTimestamp(duration)}. This updates
-            the timestamp without seeking the video.
-          </p>
-          <input
-            id="timestamp-input"
-            type="text"
-            placeholder="1:35"
-            required
-            value={timestampDraft}
-            aria-invalid={timestampError ? true : undefined}
-            aria-describedby={timestampError ? "timestamp-help timestamp-error" : "timestamp-help"}
-            onChange={handleTimestampDraftChange}
-          />
-          {timestampError && <Alert id="timestamp-error">{timestampError}</Alert>}
-          <div className="timestamp-actions">
-            <button type="submit">Apply timestamp</button>
-            <button
-              type="button"
-              className="remove-timestamp"
-              onClick={handleRemoveTimestamp}
-            >
-              Remove timestamp
-            </button>
-          </div>
-        </form>
-      )}
-      {timestamp !== null && duration !== null && (
-        <FeedbackForm
+        <TimestampEditor
+          key={captureVersion}
           timestamp={timestamp}
-          onAddFeedback={handleAddFeedback}
+          duration={duration}
+          onApply={setTimestamp}
+          onRemove={handleRemoveTimestamp}
         />
       )}
-      <p>Feedback entries: {feedbackEntries.length}</p>
-      <ul>
-        {sortedFeedbackEntries.map((entry) => (
-          <li key={entry.id}>
-            <p>
-              <button
-                type="button"
-                onClick={() => handleSeek(entry.timestamp)}
-                disabled={duration === null || videoError !== ""}
-                aria-label={`Seek to ${formatTimestamp(entry.timestamp)}`}
-              >
-                {formatTimestamp(entry.timestamp)}
-              </button>
-              <span> · {entry.category}</span>
-            </p>
-            <p><strong>Observation:</strong> {entry.observation}</p>
-            <p><strong>Suggested improvement:</strong> {entry.suggestedImprovement}</p>
-          </li>
-        ))}
-      </ul>
+      <FeedbackList
+        timestamp={timestamp}
+        onAddFeedback={handleAddFeedback}
+        entries={feedbackEntries}
+        duration={duration}
+        onUpdate={handleUpdateFeedback}
+        onDelete={handleDeleteFeedback}
+        canSeek={duration !== null && videoError === ""}
+        onSeek={handleSeek}
+      />
     </section>
   )
 }
