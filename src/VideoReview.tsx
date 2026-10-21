@@ -1,12 +1,26 @@
 import { useEffect, useRef, useState } from "react"
-import type { ChangeEvent, FormEvent, SyntheticEvent } from "react"
+import type { ChangeEvent, SubmitEvent, SyntheticEvent } from "react"
 import Alert from "./Alert"
+import FeedbackForm from "./FeedbackForm"
+import type { FeedbackEntry } from "./types"
 
 function formatTimestamp(seconds: number): string {
   const minutes = Math.floor(seconds / 60)
   const remainingSeconds = Math.floor(seconds % 60)
 
   return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`
+}
+
+function convertTimestampDraftToSeconds(draft: string): number | null {
+  const match = /^(\d+):([0-5]\d)$/.exec(draft.trim())
+
+  if (!match) return null
+
+  const seconds = Number(match[1]) * 60 + Number(match[2])
+
+  if (!Number.isFinite(seconds)) return null
+
+  return seconds
 }
 
 function VideoReview() {
@@ -16,6 +30,7 @@ function VideoReview() {
   const [timestampDraft, setTimestampDraft] = useState("")
   const [timestampError, setTimestampError] = useState("")
   const [videoError, setVideoError] = useState("")
+  const [feedbackEntries, setFeedbackEntries] = useState<FeedbackEntry[]>([])
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const captureButtonRef = useRef<HTMLButtonElement | null>(null)
 
@@ -78,23 +93,18 @@ function VideoReview() {
     setTimestampError("")
   }
 
-  function handleTimestampSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleTimestampSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     if (duration === null) return
 
-    const match = /^(\d+):([0-5]\d)$/.exec(timestampDraft.trim())
+    const seconds = convertTimestampDraftToSeconds(timestampDraft)
 
-    if (!match) {
+    if (seconds === null) {
       setTimestampError("Enter a time in m:ss format, such as 1:35 or 01:35. Seconds must be between 00 and 59.")
       return
     }
 
-    const seconds = Number(match[1]) * 60 + Number(match[2])
-
-    if (
-      !Number.isFinite(seconds) ||
-      seconds > duration
-    ) {
+    if (seconds > duration) {
       setTimestampError(`Enter a time between 0:00 and ${formatTimestamp(duration)}.`)
       return
     }
@@ -114,6 +124,39 @@ function VideoReview() {
 
     clearTimestamp()
     captureButtonRef.current?.focus()
+  }
+
+  function handleAddFeedback(entry: FeedbackEntry): string | null {
+    if (
+      duration === null ||
+      !Number.isFinite(entry.timestamp) ||
+      entry.timestamp < 0 ||
+      entry.timestamp > duration
+    ) {
+      return "Capture a valid timestamp within the recording before adding feedback."
+    }
+
+    setFeedbackEntries((previous) => [...previous, entry])
+    return null
+  }
+
+  const sortedFeedbackEntries = [...feedbackEntries].sort(
+    (a, b) => a.timestamp - b.timestamp
+  )
+
+  function handleSeek(seconds: number) {
+    const video = videoRef.current
+
+    if (
+      !video ||
+      video.error ||
+      duration === null ||
+      !Number.isFinite(seconds) ||
+      seconds < 0 ||
+      seconds > duration
+    ) return
+
+    video.currentTime = seconds
   }
 
   return (
@@ -189,6 +232,32 @@ function VideoReview() {
           </div>
         </form>
       )}
+      {timestamp !== null && duration !== null && (
+        <FeedbackForm
+          timestamp={timestamp}
+          onAddFeedback={handleAddFeedback}
+        />
+      )}
+      <p>Feedback entries: {feedbackEntries.length}</p>
+      <ul>
+        {sortedFeedbackEntries.map((entry) => (
+          <li key={entry.id}>
+            <p>
+              <button
+                type="button"
+                onClick={() => handleSeek(entry.timestamp)}
+                disabled={duration === null || videoError !== ""}
+                aria-label={`Seek to ${formatTimestamp(entry.timestamp)}`}
+              >
+                {formatTimestamp(entry.timestamp)}
+              </button>
+              <span> · {entry.category}</span>
+            </p>
+            <p><strong>Observation:</strong> {entry.observation}</p>
+            <p><strong>Suggested improvement:</strong> {entry.suggestedImprovement}</p>
+          </li>
+        ))}
+      </ul>
     </section>
   )
 }
