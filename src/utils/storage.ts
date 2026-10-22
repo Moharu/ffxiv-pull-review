@@ -4,7 +4,7 @@ import type { SavedReview } from "../types"
 export const REVIEW_STORAGE_KEY = "ffxiv-pull-review"
 
 export function createEmptyReview(): SavedReview {
-  return { version: 1, recording: null, context: null, feedbackEntries: [] }
+  return { version: 2, recording: null, context: null, feedbackEntries: [] }
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -16,12 +16,12 @@ function isNonemptyString(value: unknown): value is string {
 }
 
 export function isSavedReview(value: unknown): value is SavedReview {
-  if (!isObject(value) || value.version !== 1 || !Array.isArray(value.feedbackEntries)) return false
+  if (!isObject(value) || value.version !== 2 || !Array.isArray(value.feedbackEntries)) return false
   const { context, recording, feedbackEntries } = value
 
   if (context !== null && (
     !isObject(context) ||
-    ![context.title, context.encounter, context.playerName, context.playerJob].every(isNonemptyString) ||
+    ![context.encounter, context.playerName, context.playerJob].every(isNonemptyString) ||
     typeof context.pullNotes !== "string"
   )) return false
 
@@ -45,6 +45,25 @@ export function isSavedReview(value: unknown): value is SavedReview {
   return feedbackEntries.length === 0 || recording !== null
 }
 
+// Version 1 included Review Title. Preserve all other review data when upgrading.
+export function migrateReview(value: unknown): SavedReview | null {
+  if (!isObject(value)) return null
+  if (value.version === 2) return isSavedReview(value) ? value : null
+  if (value.version !== 1) return null
+  if (value.context !== null && (
+    !isObject(value.context) || !isNonemptyString(value.context.title)
+  )) return null
+
+  const context = value.context === null ? null : {
+    encounter: value.context.encounter,
+    playerName: value.context.playerName,
+    playerJob: value.context.playerJob,
+    pullNotes: value.context.pullNotes,
+  }
+  const migrated = { ...value, version: 2, context }
+  return isSavedReview(migrated) ? migrated : null
+}
+
 type LoadResult = {
   review: SavedReview
   error: string | null
@@ -55,10 +74,11 @@ export function loadReview(): LoadResult {
     const raw = localStorage.getItem(REVIEW_STORAGE_KEY)
     if (raw === null) return { review: createEmptyReview(), error: null }
     const parsed: unknown = JSON.parse(raw)
-    if (!isSavedReview(parsed)) {
+    const review = migrateReview(parsed)
+    if (!review) {
       return { review: createEmptyReview(), error: "Saved review data is invalid or uses an unsupported version. It has not been overwritten." }
     }
-    return { review: parsed, error: null }
+    return { review, error: null }
   } catch {
     return { review: createEmptyReview(), error: "The saved review could not be read. Browser storage may be unavailable or the data may be damaged. It has not been overwritten." }
   }
@@ -68,14 +88,14 @@ export function saveReview(review: SavedReview): string | null {
   try {
     // Explicitly whitelist persisted fields: never serialize a File or temporary URL.
     const saved: SavedReview = {
-      version: 1,
+      version: 2,
       recording: review.recording === null ? null : {
         name: review.recording.name,
         size: review.recording.size,
         lastModified: review.recording.lastModified,
       },
       context: review.context === null ? null : {
-        title: review.context.title, encounter: review.context.encounter,
+        encounter: review.context.encounter,
         playerName: review.context.playerName, playerJob: review.context.playerJob,
         pullNotes: review.context.pullNotes,
       },

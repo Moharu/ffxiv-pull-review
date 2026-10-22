@@ -9,13 +9,15 @@ import { formatTimestamp } from "./utils/timestamps"
 import { validateFeedback } from "./utils/feedback"
 
 type VideoReviewProps = {
+  isSettingUp: boolean
+  onReadyChange: (ready: boolean) => void
   recording: RecordingIdentity | null
   onRecordingChange: (recording: RecordingIdentity, startNew: boolean) => void
   feedbackEntries: FeedbackEntry[]
   onFeedbackChange: (update: (entries: FeedbackEntry[]) => FeedbackEntry[]) => void
 }
 
-function VideoReview({ recording, onRecordingChange, feedbackEntries, onFeedbackChange }: VideoReviewProps) {
+function VideoReview({ isSettingUp, onReadyChange, recording, onRecordingChange, feedbackEntries, onFeedbackChange }: VideoReviewProps) {
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [timestamp, setTimestamp] = useState<number | null>(null)
   const [duration, setDuration] = useState<number | null>(null)
@@ -45,6 +47,7 @@ function VideoReview({ recording, onRecordingChange, feedbackEntries, onFeedback
   }
 
   function connectRecording(file: File, startNew = false) {
+    onReadyChange(false)
     setVideoFile(file)
     onRecordingChange(getRecordingIdentity(file), startNew)
     clearTimestamp()
@@ -63,6 +66,7 @@ function VideoReview({ recording, onRecordingChange, feedbackEntries, onFeedback
 
     if (recording && !matchesRecording(recording, getRecordingIdentity(file))) {
       videoRef.current?.pause()
+      onReadyChange(false)
       setPendingFile(file)
       setConfirmNewReview(false)
       return
@@ -74,9 +78,11 @@ function VideoReview({ recording, onRecordingChange, feedbackEntries, onFeedback
     const seconds = event.currentTarget.duration
 
     if (Number.isFinite(seconds) && seconds > 0) {
+      onReadyChange(true)
       setDuration(seconds)
       setVideoError("")
     } else {
+      onReadyChange(false)
       setDuration(null)
       clearTimestamp()
       setVideoError("This recording has no usable duration. Select another video file.")
@@ -87,6 +93,7 @@ function VideoReview({ recording, onRecordingChange, feedbackEntries, onFeedback
     // Source cleanup can reset the element without a media error.
     if (!event.currentTarget.error) return
 
+    onReadyChange(false)
     setVideoError("This video could not be played. Its format may be unsupported or the file may be damaged. Select another video file.")
     setDuration(null)
     clearTimestamp()
@@ -151,7 +158,7 @@ function VideoReview({ recording, onRecordingChange, feedbackEntries, onFeedback
 
   return (
     <section className="video-review" aria-labelledby="video-review-heading">
-      <h2 id="video-review-heading">Recording playback</h2>
+      <h2 id="video-review-heading">{isSettingUp ? "Recording" : "Recording playback"}</h2>
       <p id="video-help" className="form-hint">
         Your video stays on this device. Select it again after refreshing.
       </p>
@@ -161,6 +168,8 @@ function VideoReview({ recording, onRecordingChange, feedbackEntries, onFeedback
         ref={fileInputRef}
         id="video-upload"
         type="file"
+        form={isSettingUp ? "recording-context-form" : undefined}
+        required={isSettingUp && !videoFile}
         accept="video/*"
         aria-describedby="video-help"
         onChange={handleFileChange}
@@ -181,9 +190,10 @@ function VideoReview({ recording, onRecordingChange, feedbackEntries, onFeedback
           ) : (
             <>
               <button type="button" onClick={() => {
+                onReadyChange(duration !== null && !videoError)
                 setPendingFile(null)
                 fileInputRef.current?.focus()
-              }}>Choose another file</button>
+              }}>Cancel replacement</button>
               <button type="button" onClick={() => connectRecording(pendingFile)}>Use this recording anyway</button>
               <button type="button" onClick={() => setConfirmNewReview(true)}>Start a new review</button>
             </>
@@ -210,7 +220,7 @@ function VideoReview({ recording, onRecordingChange, feedbackEntries, onFeedback
       {duration !== null && feedbackEntries.some((entry) => entry.timestamp > duration) && (
         <Alert>Some feedback timestamps exceed this recording's duration. Those moments cannot be sought; edit their timestamps or choose the original recording. Notes have been preserved.</Alert>
       )}
-      {(videoFile || feedbackEntries.length > 0) && <FeedbackList
+      {!isSettingUp && (videoFile || feedbackEntries.length > 0) && <FeedbackList
         timestamp={timestamp}
         onStartFeedback={handleStartFeedback}
         onCancelFeedback={clearTimestamp}

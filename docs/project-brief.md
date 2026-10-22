@@ -8,7 +8,7 @@ The portfolio should demonstrate typed React state, accessible forms, media inte
 
 ## MVP boundaries
 
-- One active recording/review. Target context: encounter, POV player name, job, and optional pull notes. Issue #8 removes the existing Review Title field and moves required video selection into the setup form.
+- One active recording/review. Context: encounter, POV player name, job, and optional pull notes. Review Title has been removed with backward-compatible saved-data migration. Setup requires valid context and a playable selected video before Start review; it becomes a compact context header above playback and feedback in the same panel. Edit context supports Save/Cancel while preserving feedback and the connected player.
 - Select a browser-playable local video through a file input and play it with native video controls. Do not upload or commit footage. The user must select the file again after reload; explain this in the interface.
 - Add Feedback pauses the player and opens a new-entry row with its current whole-second timestamp locked. Playback can resume without changing the draft's time. Save adds the entry and closes the draft; Cancel discards it. Saved timestamps can be corrected within the loaded video's duration through inline editing. Selecting a feedback timestamp seeks the video.
 - Each feedback entry has an ID, timestamp, importance (1–5), category, observation, and suggested improvement.
@@ -24,7 +24,7 @@ No backend, accounts, video uploads, AI features, multiple-review library, shari
 
 ## Main user flow
 
-1. Enter recording context and select a playable video in one setup panel, then choose Start review. Issue #8 implements this transition and replaces the form with a compact context header above playback, with Edit context available.
+1. Enter recording context and select a playable video in one setup panel, then choose Start review. The form becomes a compact context header above playback, with Edit context available.
 2. Watch and choose Add Feedback at a relevant moment; the player pauses and the draft locks that timestamp.
 3. Record an observation and a concrete suggested improvement for the POV player, then Save or Cancel. Playback may resume while drafting.
 4. Revisit timestamps, edit notes, and filter categories.

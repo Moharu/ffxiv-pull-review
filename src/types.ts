@@ -28,7 +28,6 @@ export type FeedbackEntry = {
 }
 
 export type RecordingContext = {
-  title: string
   encounter: string
   playerName: string
   playerJob: string
@@ -42,7 +41,7 @@ export type RecordingIdentity = {
 }
 
 export type SavedReview = {
-  version: 1
+  version: 2
   recording: RecordingIdentity | null
   context: RecordingContext | null
   feedbackEntries: FeedbackEntry[]

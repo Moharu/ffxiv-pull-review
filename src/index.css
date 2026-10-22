@@ -49,8 +49,7 @@ main > p:not(.eyebrow) {
   color: #40578a;
 }
 
-.context-card,
-.video-review {
+.review-panel {
   margin-top: 2rem;
   padding: clamp(1.25rem, 4vw, 2.25rem);
   background: white;
@@ -58,6 +57,45 @@ main > p:not(.eyebrow) {
   border-radius: 1rem;
   box-shadow: 0 8px 32px #202b3c08;
 }
+
+.context-card,
+.video-review {
+  min-width: 0;
+}
+
+.video-review {
+  margin-top: 1.5rem;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #d5dce8;
+}
+
+.review-header p { margin: 0.35rem 0; }
+.review-pull-notes { white-space: pre-wrap; overflow-wrap: anywhere; }
+.setup-actions { margin-top: 1.5rem; }
+.setup-actions button { margin: 0.75rem 0.75rem 0 0; }
+
+.review-panel > .setup-actions button,
+.review-header button {
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid #2848a0;
+  border-radius: 0.5rem;
+  background: #2848a0;
+  color: white;
+  font: inherit;
+  cursor: pointer;
+}
+
+.review-panel button:disabled { cursor: not-allowed; }
+.setup-actions button:disabled { background: #e2e7ef; color: #526078; border-color: #8592a8; }
 
 .video-review label {
   display: block;

@@ -1,16 +1,21 @@
 import RecordingContextForm from './RecordingContextForm'
 import VideoReview from './VideoReview'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Alert from './Alert'
 import { loadReview, saveReview } from './utils/storage'
 import type { FeedbackEntry, RecordingContext, RecordingIdentity, SavedReview } from './types'
 
 function App() {
+  const focusReviewHeading = useCallback((heading: HTMLHeadingElement | null) => heading?.focus(), [])
   const [initialLoad] = useState(loadReview)
   const [review, setReview] = useState<SavedReview>(initialLoad.review)
   const [storageEnabled, setStorageEnabled] = useState(initialLoad.error === null)
   const [writeError, setWriteError] = useState<string | null>(null)
   const [confirmReplace, setConfirmReplace] = useState(false)
+  const [isSettingUp, setIsSettingUp] = useState(
+    initialLoad.review.context === null && initialLoad.review.feedbackEntries.length === 0,
+  )
+  const [videoReady, setVideoReady] = useState(false)
   const [reviewGeneration, setReviewGeneration] = useState(0)
 
   useEffect(() => {
@@ -32,13 +37,18 @@ function App() {
 
   function handleRecordingChange(recording: RecordingIdentity, startNew: boolean) {
     setReview((previous) => startNew
-      ? { version: 1, recording, context: null, feedbackEntries: [] }
+      ? { version: 2, recording, context: null, feedbackEntries: [] }
       : { ...previous, recording })
-    if (startNew) setReviewGeneration((previous) => previous + 1)
+    if (startNew) {
+      setReviewGeneration((previous) => previous + 1)
+      setIsSettingUp(true)
+    }
   }
 
   function handleSaveContext(context: RecordingContext) {
+    if (!videoReady) return
     setReview((previous) => ({ ...previous, context }))
+    setIsSettingUp(false)
   }
 
   function handleFeedbackChange(update: (entries: FeedbackEntry[]) => FeedbackEntry[]) {
@@ -74,13 +84,47 @@ function App() {
           {storageEnabled && <button type="button" onClick={() => setWriteError(saveReview(review))}>Retry save</button>}
         </div>
       )}
-      <VideoReview
-        recording={review.recording}
-        onRecordingChange={handleRecordingChange}
-        feedbackEntries={review.feedbackEntries}
-        onFeedbackChange={handleFeedbackChange}
-      />
-      <RecordingContextForm key={reviewGeneration} savedContext={review.context} onSaveContext={handleSaveContext} />
+      <section className="review-panel" aria-label="Raid review">
+        {isSettingUp ? (
+          <RecordingContextForm
+            key={reviewGeneration}
+            savedContext={review.context}
+            onSaveContext={handleSaveContext}
+            videoReady={videoReady}
+          />
+        ) : (
+          <header className="review-header">
+            <div>
+              <h2 tabIndex={-1} ref={focusReviewHeading}>
+                {review.context?.encounter ?? 'Restored review'}
+              </h2>
+              {review.context && <p>{review.context.playerName} · {review.context.playerJob}</p>}
+              {review.recording && <p className="form-hint">{review.recording.name}</p>}
+              {review.context?.pullNotes && <p className="review-pull-notes">{review.context.pullNotes}</p>}
+            </div>
+            <button type="button" onClick={() => setIsSettingUp(true)}>Edit context</button>
+          </header>
+        )}
+        <VideoReview
+          recording={review.recording}
+          onRecordingChange={handleRecordingChange}
+          feedbackEntries={review.feedbackEntries}
+          onFeedbackChange={handleFeedbackChange}
+          isSettingUp={isSettingUp}
+          onReadyChange={setVideoReady}
+        />
+        {isSettingUp && (
+          <div className="setup-actions">
+            {!videoReady && <p className="form-hint">Select a playable recording before starting the review.</p>}
+            <button form="recording-context-form" type="submit" disabled={!videoReady}>
+              {review.context ? 'Save context' : 'Start review'}
+            </button>
+            {(review.context || review.feedbackEntries.length > 0) && (
+              <button type="button" onClick={() => setIsSettingUp(false)}>Cancel context changes</button>
+            )}
+          </div>
+        )}
+      </section>
     </main>
   )
 }

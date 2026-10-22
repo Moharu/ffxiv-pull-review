@@ -17,6 +17,7 @@ type TextFieldProps = {
   onChange: (value: string) => void
   placeholder?: string
   required?: boolean
+  autoFocus?: boolean
 }
 
 const TextField = ({
@@ -26,6 +27,7 @@ const TextField = ({
   onChange,
   placeholder,
   required = false,
+  autoFocus,
 }: TextFieldProps) => (
   <div>
     <label htmlFor={id}>
@@ -34,6 +36,7 @@ const TextField = ({
     </label>
     <input
       required={required}
+      autoFocus={autoFocus}
       id={id}
       type="text"
       placeholder={placeholder}
@@ -44,12 +47,12 @@ const TextField = ({
 )
 
 type RecordingContextFormProps = {
+  videoReady: boolean
   savedContext: RecordingContext | null
   onSaveContext: (context: RecordingContext) => void
 }
 
-function RecordingContextForm({ savedContext, onSaveContext }: RecordingContextFormProps) {
-  const [title, setTitle] = useState(savedContext?.title ?? "")
+function RecordingContextForm({ savedContext, onSaveContext, videoReady }: RecordingContextFormProps) {
   const [encounter, setEncounter] = useState(savedContext?.encounter ?? "")
   const [playerName, setPlayerName] = useState(savedContext?.playerName ?? "")
   const [playerJob, setPlayerJob] = useState(savedContext?.playerJob ?? "")
@@ -57,20 +60,23 @@ function RecordingContextForm({ savedContext, onSaveContext }: RecordingContextF
   const [error, setError] = useState("")
   return (
     <section className="context-card" aria-labelledby="recording-context">
-      <h2 id="recording-context">Recording context</h2>
-      <form
+      <h2 id="recording-context">{savedContext ? "Edit recording context" : "Set up your review"}</h2>
+      <form id="recording-context-form"
         onSubmit={(event) => {
           event.preventDefault()
-          const requiredValues = [title, encounter, playerName, playerJob]
+          const requiredValues = [encounter, playerName, playerJob]
 
           if (requiredValues.some((value) => value.trim() === "")) {
-            setError("Enter a review title, encounter, player name, and job. Spaces alone don’t count.")
+            setError("Enter an encounter, player name, and job. Spaces alone don’t count.")
             return
           }
 
+          if (!videoReady) {
+            setError("Select a playable recording before starting the review.")
+            return
+          }
           setError("")
           onSaveContext({
-            title: title.trim(),
             encounter: encounter.trim(),
             playerName: playerName.trim(),
             playerJob: playerJob.trim(),
@@ -81,14 +87,7 @@ function RecordingContextForm({ savedContext, onSaveContext }: RecordingContextF
         <p className="form-hint">Fields marked * are required.</p>
         <TextField
           required
-          id="review-title"
-          label="Review title"
-          placeholder="Enter a title for your review"
-          value={title}
-          onChange={setTitle}
-        />
-        <TextField
-          required
+          autoFocus
           id="encounter"
           label="Encounter"
           placeholder="Set the encounter for your review"
@@ -129,13 +128,8 @@ function RecordingContextForm({ savedContext, onSaveContext }: RecordingContextF
           />
         </div>
         {error && <Alert>{error}</Alert>}
-        <button type="submit">Save context</button>
       </form>
-      {savedContext && (
-        <p role="status">
-          Context saved for “{savedContext.title}”.
-        </p>
-      )}
+
     </section>
   )
 }
