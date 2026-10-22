@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useId, useState } from "react"
 import type { SubmitEvent } from "react"
 import Alert from "./Alert"
 import SaveCancelActions from "./SaveCancelActions"
@@ -15,6 +15,8 @@ type FeedbackFormProps = {
 }
 
 function FeedbackForm({ timestamp, onAddFeedback, onCancel }: FeedbackFormProps) {
+  const prefix = useId()
+  const formId = `${prefix}-form`
   const [category, setCategory] = useState<FeedbackCategory>(feedbackCategories[0])
   const [importance, setImportance] = useState<Importance>(3)
   const [observation, setObservation] = useState("")
@@ -53,19 +55,24 @@ function FeedbackForm({ timestamp, onAddFeedback, onCancel }: FeedbackFormProps)
 
   return (
     <>
-      <tr className="feedback-row feedback-editor feedback-new-row">
+      <tr className="feedback-row feedback-editor feedback-new-row" onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.preventDefault()
+          onCancel()
+        }
+      }}>
         <td>
           <small>New feedback</small>
           <span className="visually-hidden">Locked timestamp: </span>
           <span>{formatTimestamp(timestamp)}</span>
         </td>
         <td>
-          <ImportanceSelect autoFocus id="feedback-importance" form="feedback-form"
+          <ImportanceSelect autoFocus id={`${prefix}-feedback-importance`} form={formId}
             value={importance} onChange={setImportance} />
         </td>
         <td>
-          <label className="visually-hidden" htmlFor="feedback-category">Category</label>
-          <select id="feedback-category" form="feedback-form" value={category}
+          <label className="visually-hidden" htmlFor={`${prefix}-feedback-category`}>Category</label>
+          <select id={`${prefix}-feedback-category`} form={formId} value={category}
             onChange={(event) => setCategory(event.target.value as FeedbackCategory)}>
             {feedbackCategories.map((category) => (
               <option key={category} value={category}>{category}</option>
@@ -73,17 +80,17 @@ function FeedbackForm({ timestamp, onAddFeedback, onCancel }: FeedbackFormProps)
           </select>
         </td>
         <td>
-          <label className="visually-hidden" htmlFor="feedback-observation">Observation</label>
-          <textarea id="feedback-observation" form="feedback-form" placeholder="What happened?" required
+          <label className="visually-hidden" htmlFor={`${prefix}-feedback-observation`}>Observation</label>
+          <textarea id={`${prefix}-feedback-observation`} form={formId} placeholder="What happened?" required
             value={observation} onChange={(event) => setObservation(event.target.value)} />
         </td>
         <td>
-          <label className="visually-hidden" htmlFor="feedback-suggested-improvement">Suggested improvement</label>
-          <textarea id="feedback-suggested-improvement" form="feedback-form" placeholder="What could improve?" required
+          <label className="visually-hidden" htmlFor={`${prefix}-feedback-suggested-improvement`}>Suggested improvement</label>
+          <textarea id={`${prefix}-feedback-suggested-improvement`} form={formId} placeholder="What could improve?" required
             value={suggestedImprovement} onChange={(event) => setSuggestedImprovement(event.target.value)} />
         </td>
         <td>
-          <form id="feedback-form" className="feedback-row-actions" aria-label="Add feedback" onSubmit={handleSubmit}>
+          <form id={formId} className="feedback-row-actions" aria-label="Add feedback" onSubmit={handleSubmit}>
             <SaveCancelActions onCancel={onCancel} />
           </form>
         </td>

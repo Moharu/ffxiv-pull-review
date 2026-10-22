@@ -14,6 +14,27 @@ const entry: FeedbackEntry = {
 }
 
 describe('FeedbackItem', () => {
+  it('cancels inline editing and removal with Escape and restores action focus', async () => {
+    const user = userEvent.setup()
+    const onUpdate = vi.fn(() => null)
+    const onDelete = vi.fn()
+    render(<table><tbody>
+      <FeedbackItem entry={entry} duration={60} canSeek canModify onSeek={vi.fn()}
+        onUpdate={onUpdate} onDelete={onDelete} />
+    </tbody></table>)
+    await user.click(screen.getByRole('button', { name: 'Edit feedback at 0:10: Moved too late.' }))
+    await user.type(screen.getByRole('textbox', { name: 'Observation' }), ' draft')
+    await user.keyboard('{Escape}')
+    expect(onUpdate).not.toHaveBeenCalled()
+    expect(screen.queryByRole('textbox', { name: 'Observation' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Edit feedback at 0:10: Moved too late.' })).toHaveFocus()
+    await user.click(screen.getByRole('button', { name: 'Remove feedback at 0:10: Moved too late.' }))
+    await user.keyboard('{Escape}')
+    expect(onDelete).not.toHaveBeenCalled()
+    expect(screen.queryByRole('group')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Remove feedback at 0:10: Moved too late.' })).toHaveFocus()
+  })
+
   it('preserves the edited draft when saving is rejected', async () => {
     const user = userEvent.setup()
     const onUpdate = vi.fn(() => 'Unable to save feedback.')

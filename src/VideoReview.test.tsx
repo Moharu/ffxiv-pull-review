@@ -52,6 +52,25 @@ function savedRows() {
 }
 
 describe('VideoReview feedback mutations', () => {
+  it('keeps local and demo draft labels and form ownership separate', async () => {
+    const { user } = await setupRecording()
+    await user.click(screen.getByRole('button', { name: 'Add Feedback' }))
+    await user.type(screen.getByRole('textbox', { name: 'Observation' }), 'Local draft')
+    await user.click(screen.getByRole('button', { name: 'Try demo recording' }))
+    const demo = screen.getByRole('region', { name: 'Demo review' })
+    fireEvent.loadedMetadata(demo.querySelector('video')!)
+    await user.click(within(demo).getByRole('button', { name: 'Add Feedback' }))
+    const ids = [...document.querySelectorAll('[id]')].map((element) => element.id)
+    expect(new Set(ids).size).toBe(ids.length)
+    const observation = within(demo).getByRole('textbox', { name: 'Observation' }) as HTMLTextAreaElement
+    expect(observation.form).toBe(within(demo).getByRole('form', { name: 'Add feedback' }))
+    await user.type(observation, 'Demo draft')
+    await user.keyboard('{Escape}')
+    expect(within(demo).queryByRole('textbox', { name: 'Observation' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Return to my review' }))
+    expect(screen.getByRole('textbox', { name: 'Observation' })).toHaveValue('Local draft')
+  })
+
   it('pauses the local player for the demo and preserves the selected file and feedback on return', async () => {
     const { user, video } = await setupRecording()
     await addNote(user, video, 10, 'My local note')

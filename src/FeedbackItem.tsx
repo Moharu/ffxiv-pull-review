@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import { useId, useRef, useState } from "react"
 import type { SubmitEvent } from "react"
 import Alert from "./Alert"
 import SaveCancelActions from "./SaveCancelActions"
@@ -27,7 +27,7 @@ function FeedbackItem({ entry, duration, onUpdate, onDelete, canSeek, canModify,
   const editButtonRef = useRef<HTMLButtonElement | null>(null)
   const restoreEditFocus = useRef(false)
   const removeButtonRef = useRef<HTMLButtonElement | null>(null)
-  const prefix = `feedback-${entry.id}`
+  const prefix = useId()
 
   function handleEdit() {
     if (!canModify) return
@@ -41,6 +41,11 @@ function FeedbackItem({ entry, duration, onUpdate, onDelete, canSeek, canModify,
     setIsEditing(false)
     setError("")
     restoreEditFocus.current = true
+  }
+
+  function cancelRemoval() {
+    setIsConfirmingRemoval(false)
+    removeButtonRef.current?.focus()
   }
 
   function handleSave(event: SubmitEvent<HTMLFormElement>) {
@@ -68,7 +73,13 @@ function FeedbackItem({ entry, duration, onUpdate, onDelete, canSeek, canModify,
 
   return (
     <>
-      <tr className={isEditing ? "feedback-row feedback-editor" : "feedback-row"}>
+      <tr className={isEditing ? "feedback-row feedback-editor" : "feedback-row"}
+        onKeyDown={(event) => {
+          if (event.key === "Escape" && isEditing) {
+            event.preventDefault()
+            closeEditor()
+          }
+        }}>
         <td>
           {isEditing ? (
             <>
@@ -131,7 +142,7 @@ function FeedbackItem({ entry, duration, onUpdate, onDelete, canSeek, canModify,
           {isEditing ? (
             <form id={`${prefix}-editor`} className="feedback-row-actions" onSubmit={handleSave}
               aria-label={`Edit feedback at ${formatTimestamp(entry.timestamp)}: ${entry.observation}`}>
-              <SaveCancelActions onCancel={closeEditor} />
+              <SaveCancelActions onCancel={closeEditor} disabled={!canModify} />
             </form>
           ) : (
             <div className="feedback-row-actions">
@@ -170,14 +181,17 @@ function FeedbackItem({ entry, duration, onUpdate, onDelete, canSeek, canModify,
         <tr>
           <td colSpan={6}>
             <div id={`${prefix}-removal`} className="removal-confirmation" role="group"
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  event.preventDefault()
+                  cancelRemoval()
+                }
+              }}
               aria-labelledby={`${prefix}-removal-label`}>
               <p id={`${prefix}-removal-label`}>Remove feedback at {formatTimestamp(entry.timestamp)}? This cannot be undone.</p>
               <div className="feedback-row-actions">
                 <button type="button" className="remove-timestamp" disabled={!canModify} onClick={() => onDelete(entry.id)}>Remove</button>
-                <button autoFocus type="button" onClick={() => {
-                  setIsConfirmingRemoval(false)
-                  removeButtonRef.current?.focus()
-                }}>Cancel</button>
+                <button autoFocus type="button" onClick={cancelRemoval}>Cancel</button>
               </div>
             </div>
           </td>

@@ -34,6 +34,8 @@ describe('demo recording', () => {
     expect(container.querySelector('video')).toBeNull()
     await user.click(screen.getByRole('button', { name: 'Try demo recording' }))
     const demo = screen.getByRole('region', { name: 'Demo review' })
+    const ids = [...document.querySelectorAll('[id]')].map((element) => element.id)
+    expect(new Set(ids).size).toBe(ids.length)
     expect(demo.querySelector('video')).toHaveAttribute('src', demoVideoUrl)
     expect(demo.querySelector('video')).not.toHaveAttribute('autoplay')
     expect(within(demo).queryByLabelText('Select a local video')).not.toBeInTheDocument()

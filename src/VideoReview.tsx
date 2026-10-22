@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 import type { ChangeEvent, SyntheticEvent } from "react"
 import Alert from "./Alert"
 import FeedbackList from "./FeedbackList"
@@ -20,6 +20,7 @@ type VideoReviewProps = {
 }
 
 function VideoReview({ remoteSource, isSuspended = false, isSettingUp, onReadyChange, recording, onRecordingChange, feedbackEntries, onFeedbackChange }: VideoReviewProps) {
+  const prefix = useId()
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [timestamp, setTimestamp] = useState<number | null>(null)
   const [duration, setDuration] = useState<number | null>(null)
@@ -166,29 +167,29 @@ function VideoReview({ remoteSource, isSuspended = false, isSettingUp, onReadyCh
   }
 
   return (
-    <section className="video-review" aria-labelledby="video-review-heading">
-      <h2 id="video-review-heading">{isSettingUp ? "Recording" : "Recording playback"}</h2>
+    <section className="video-review" aria-labelledby={`${prefix}-video-review-heading`}>
+      <h2 id={`${prefix}-video-review-heading`}>{isSettingUp ? "Recording" : "Recording playback"}</h2>
       {!remoteSource && <>
-      <p id="video-help" className="form-hint">
+      <p id={`${prefix}-video-help`} className="form-hint">
         Your video stays on this device. Select it again after refreshing.
       </p>
       {!videoFile && <p>Select a recording to begin.</p>}
-      <label htmlFor="video-upload">Select a local video</label>
+      <label htmlFor={`${prefix}-video-upload`}>Select a local video</label>
       <input
         ref={fileInputRef}
-        id="video-upload"
+        id={`${prefix}-video-upload`}
         type="file"
         form={isSettingUp ? "recording-context-form" : undefined}
         required={isSettingUp && !videoFile}
         accept="video/*"
-        aria-describedby="video-help"
+        aria-describedby={`${prefix}-video-help`}
         onChange={handleFileChange}
       />
       {recording && <p className="form-hint">Review recording: {recording.name}</p>}
       </>}
       {pendingFile && (
-        <div className="removal-confirmation" role="group" aria-labelledby="recording-mismatch">
-          <p id="recording-mismatch" role="alert">
+        <div className="removal-confirmation" role="group" aria-labelledby={`${prefix}-recording-mismatch`}>
+          <p id={`${prefix}-recording-mismatch`} role="alert">
             “{pendingFile.name}” does not match the review recording's filename, size, or last-modified time.
             Matching metadata is a convenience check, not proof of identical contents.
           </p>

@@ -1,6 +1,6 @@
 import FeedbackForm from "./FeedbackForm"
 import FeedbackItem from "./FeedbackItem"
-import { useRef, useState } from "react"
+import { useId, useRef, useState } from "react"
 import { feedbackCategories } from "./types"
 import type { FeedbackCategory, FeedbackEntry } from "./types"
 
@@ -18,6 +18,8 @@ type FeedbackListProps = {
 }
 
 function FeedbackList({ onStartFeedback, onCancelFeedback, timestamp, onAddFeedback, entries, duration, onUpdate, onDelete, canSeek, onSeek }: FeedbackListProps) {
+  const filterId = useId()
+  const scrollHelpId = useId()
   const restoreAddFocus = useRef(false)
   const summaryRef = useRef<HTMLParagraphElement | null>(null)
   const [categoryFilter, setCategoryFilter] = useState<FeedbackCategory | "All">("All")
@@ -33,9 +35,9 @@ function FeedbackList({ onStartFeedback, onCancelFeedback, timestamp, onAddFeedb
     <>
       <div className="feedback-toolbar">
         <div>
-      <label htmlFor="feedback-filter">Filter by category</label>
+      <label htmlFor={filterId}>Filter by category</label>
       <select
-        id="feedback-filter"
+        id={filterId}
         value={categoryFilter}
         onChange={(event) =>
           setCategoryFilter(event.target.value as FeedbackCategory | "All")
@@ -61,7 +63,8 @@ function FeedbackList({ onStartFeedback, onCancelFeedback, timestamp, onAddFeedb
       </div>
       {entries.length === 0 && <p>No feedback yet. Choose Add Feedback at a moment you want to review.</p>}
       {entries.length > 0 && visibleEntries.length === 0 && <p>No feedback matches this category.</p>}
-      {(timestamp !== null || entries.length > 0) && <div className="feedback-table-scroll" role="region" aria-label="Feedback table" tabIndex={0}>
+      {(timestamp !== null || entries.length > 0) && <div className="feedback-table-scroll" role="region" aria-label="Feedback table" aria-describedby={scrollHelpId} tabIndex={0}>
+        <p id={scrollHelpId} className="table-scroll-hint">Scroll sideways to see all columns on a small screen.</p>
         <table className="feedback-table">
           <caption className="visually-hidden">Feedback in timestamp order</caption>
           <thead>
