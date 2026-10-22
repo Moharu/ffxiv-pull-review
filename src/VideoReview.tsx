@@ -175,6 +175,7 @@ function VideoReview({ remoteSource, isSuspended = false, isSettingUp, onReadyCh
       </p>
       {!videoFile && <p>Select a recording to begin.</p>}
       <label htmlFor={`${prefix}-video-upload`}>Select a local video</label>
+      <div className="file-picker">
       <input
         ref={fileInputRef}
         id={`${prefix}-video-upload`}
@@ -182,10 +183,15 @@ function VideoReview({ remoteSource, isSuspended = false, isSettingUp, onReadyCh
         form={isSettingUp ? "recording-context-form" : undefined}
         required={isSettingUp && !videoFile}
         accept="video/*"
-        aria-describedby={`${prefix}-video-help`}
+        aria-describedby={`${prefix}-video-help ${prefix}-file-status`}
         onChange={handleFileChange}
       />
-      {recording && <p className="form-hint">Review recording: {recording.name}</p>}
+      <span className="file-picker-action" aria-hidden="true">Choose file</span>
+      <span id={`${prefix}-file-status`} className="file-picker-name">
+        {videoFile ? `Selected: ${videoFile.name}` : "No video connected"}
+      </span>
+      </div>
+      {recording && !videoFile && <p className="form-hint">Saved review recording: {recording.name}. Select it again to reconnect.</p>}
       </>}
       {pendingFile && (
         <div className="removal-confirmation" role="group" aria-labelledby={`${prefix}-recording-mismatch`}>

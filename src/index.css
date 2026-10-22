@@ -87,21 +87,6 @@ main > p:not(.eyebrow) {
 .setup-actions { margin-top: 1.5rem; }
 .setup-actions button { margin: 0.75rem 0.75rem 0 0; }
 
-.review-panel > .setup-actions button,
-.review-header button {
-  min-height: 2.75rem;
-  padding: 0.65rem 1rem;
-  border: 1px solid #2848a0;
-  border-radius: 0.5rem;
-  background: #2848a0;
-  color: white;
-  font: inherit;
-  cursor: pointer;
-}
-
-.review-panel button:disabled { cursor: not-allowed; }
-.setup-actions button:disabled { background: #e2e7ef; color: #526078; border-color: #8592a8; }
-
 .demo-entry {
   margin-top: 1.5rem;
 }
@@ -197,7 +182,12 @@ main > p:not(.eyebrow) {
 
 .feedback-toolbar select {
   max-width: 100%;
+  min-height: 2.75rem;
   padding: 0.5rem;
+  border: 1px solid #8592a8;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: inherit;
   font: inherit;
 }
 
@@ -225,12 +215,10 @@ main > p:not(.eyebrow) {
   white-space: normal;
 }
 
-.feedback-table th:nth-child(1) { width: 10%; }
-.feedback-table th:nth-child(2) { width: 12%; }
-.feedback-table th:nth-child(3) { width: 14%; }
-.feedback-table th:nth-child(4),
-.feedback-table th:nth-child(5) { width: 24%; }
-.feedback-table th:nth-child(6) { width: 16%; }
+.feedback-table th:nth-child(1) { width: 6.5rem; }
+.feedback-table th:nth-child(2) { width: 8rem; }
+.feedback-table th:nth-child(3) { width: 8rem; }
+.feedback-table th:nth-child(6) { width: 8rem; }
 
 .importance-badge {
   display: inline-block;
@@ -368,32 +356,60 @@ main > p:not(.eyebrow) {
   resize: vertical;
 }
 
-.context-card button,
-.video-review button {
-  justify-self: start;
+/* Shared controls also cover demo confirmations and storage recovery. */
+button,
+.file-picker-action {
   min-height: 2.75rem;
-  padding: 0.75rem 1.25rem;
+  padding: 0.65rem 1rem;
   border: 1px solid #2848a0;
   border-radius: 0.5rem;
   background: #2848a0;
   color: #fff;
   font: inherit;
   font-weight: 600;
+  line-height: 1.4;
   cursor: pointer;
 }
 
-.video-review button {
-  margin-top: 1rem;
+button:hover,
+.file-picker:hover .file-picker-action { background: #1d367b; }
+button:active,
+.file-picker:active .file-picker-action { background: #15295e; }
+button:disabled {
+  background: #e2e7ef;
+  border-color: #8592a8;
+  color: #526078;
+  cursor: not-allowed;
 }
 
-.context-card button:hover,
-.video-review button:hover {
-  background: #1d367b;
+.video-review button { margin-top: 1rem; }
+.removal-confirmation button { margin: 0.75rem 0.5rem 0 0; }
+
+.file-picker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #8592a8;
+  border-radius: 0.5rem;
+  background: #fff;
 }
 
-.context-card button:active,
-.video-review button:active {
-  background: #15295e;
+.video-review .file-picker input[type="file"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.file-picker-name { min-width: 0; overflow-wrap: anywhere; }
+.file-picker:has(input:focus-visible) {
+  outline: 3px solid #315bd1;
+  outline-offset: 3px;
 }
 
 :focus-visible {
@@ -434,13 +450,6 @@ main > p:not(.eyebrow) {
 
 .video-review .remove-timestamp:hover {
   background: #fff3f3;
-}
-
-.video-review button:disabled {
-  background: #e2e7ef;
-  border-color: #8592a8;
-  color: #526078;
-  cursor: not-allowed;
 }
 
 .context-card [role="status"] {

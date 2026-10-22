@@ -68,6 +68,8 @@ describe('App persistence', () => {
       feedbackEntries: [{ id: 'saved', timestamp: 10, importance: 5, category: 'Mechanics', observation: 'Saved note', suggestedImprovement: 'Move earlier' }],
     }))
     render(<App />)
+    expect(screen.getByText('No video connected')).toBeInTheDocument()
+    expect(screen.getByText('Saved review recording: raid.mp4. Select it again to reconnect.')).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'Saved note' })).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: '5 · Critical' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Seek to 0:10' })).toBeDisabled()

@@ -2,7 +2,7 @@
 
 ## Outcome
 
-Help a player watch a seven-minute FFXIV raid recording, capture actionable feedback about the POV player, and identify the most important improvements for their next pulls. This is a manual review tool, not a combat-log analyser or automated coach.
+Help a player watch an FFXIV raid recording, capture actionable feedback about the POV player, and identify the most important improvements for their next pulls. This is a manual review tool, not a combat-log analyser or automated coach.
 
 The portfolio should demonstrate typed React state, accessible forms, media interaction, local persistence, and a complete delivery workflow. Work in small increments that refresh hooks through practical use.
 
@@ -63,3 +63,7 @@ Use a small number of behavioural tests for feedback changes, timestamp validati
 6. [Filter feedback and set importance](https://github.com/Moharu/ffxiv-pull-review/issues/6)
 7. [Persist review data and recover safely](https://github.com/Moharu/ffxiv-pull-review/issues/7)
 8. [Verify accessibility, deploy and document the portfolio](https://github.com/Moharu/ffxiv-pull-review/issues/8)
+
+## Delivery checkpoint
+
+The app is available at https://ffxiv-pull-review.vercel.app/ with an opt-in hosted demo. Implementation verification includes 98 passing automated tests, lint/build, deployed Chromium flows and axe scans, plus developer-reported real-phone and 200%/400% zoom checks. Screen-reader verification was not performed. Small-screen functionality works, while a broader mobile UX redesign is deferred. See [the accessibility checkpoint](accessibility-check.md) for the precise verification scope and [the README](../README.md) for architecture and usage.

@@ -131,6 +131,7 @@ describe('VideoReview feedback mutations', () => {
       new File(['sample'], 'raid.mp4', { type: 'video/mp4', lastModified: 123456 }))
     expect(screen.queryByRole('group', { name: /does not match/ })).not.toBeInTheDocument()
     fireEvent.loadedMetadata(video)
+    expect(screen.getByText('Selected: raid.mp4')).toBeInTheDocument()
     expect(savedRows()[0]).toHaveTextContent('Keep this note')
     expect(screen.getByRole('button', { name: 'Add Feedback' })).toBeEnabled()
   })
@@ -152,7 +153,7 @@ describe('VideoReview feedback mutations', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Some feedback timestamps exceed')
     expect(savedRows()[0]).toHaveTextContent('Keep this note')
     expect(screen.getByRole('button', { name: 'Seek to 0:40' })).toBeDisabled()
-    expect(screen.getByText('Review recording: other.mp4')).toBeInTheDocument()
+    expect(screen.getByText('Selected: other.mp4')).toBeInTheDocument()
   })
 
   it('clears notes and context only after confirming a new review', async () => {
@@ -169,7 +170,7 @@ describe('VideoReview feedback mutations', () => {
     await user.click(screen.getByRole('button', { name: 'Confirm new review' }))
     expect(screen.queryByRole('cell', { name: 'Old note' })).not.toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: /Encounter/ })).toHaveValue('')
-    expect(screen.getByText('Review recording: new.mp4')).toBeInTheDocument()
+    expect(screen.getByText('Selected: new.mp4')).toBeInTheDocument()
     fireEvent.loadedMetadata(video)
     expect(screen.getByRole('button', { name: 'Start review' })).toBeEnabled()
   })

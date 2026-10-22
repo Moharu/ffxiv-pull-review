@@ -1,12 +1,30 @@
 # FFXIV Pull Review
 
-A React/TypeScript portfolio project for reviewing the individual player whose POV appears in a raid recording.
+Review an FFXIV raid recording from one player's point of view and leave actionable feedback at specific moments. Built with React, TypeScript, and Vite as a scoped portfolio project while refreshing React hooks.
 
-Start with the [project brief](docs/project-brief.md). Implementation proceeds one GitHub issue at a time, with explanations and small changes suitable for refreshing React knowledge.
+**[Open the live app](https://ffxiv-pull-review.vercel.app/)** and choose **Try demo recording** to explore without supplying footage.
 
-The [development journal](docs/development-journal.md) records decisions, learning, and how AI contributed.
+## Learning through AI-assisted development
 
-## Local persistence
+This was my first frontend project developed with AI assistance. As an experienced developer returning after a break, I used it to refresh React and explore how an AI coding collaborator could support both implementation and learning.
+
+I worked with Codex one GitHub issue at a time, asking for small steps and explanations before moving on. Early work included writing controlled inputs and tests myself, getting feedback, and asking questions about typed state, immutable updates, effects, refs, and accessible queries. As the project progressed, I delegated more implementation, styling, refactoring, and test coverage while continuing to make product decisions and test the resulting behaviour.
+
+AI contributed substantial code as well as guidance. My role included defining the use case, challenging proposed features, changing workflows that felt cumbersome, supplying domain knowledge and demo content, and checking the app in the browser and on a real phone. Understanding changes was part of the work: discussions about component boundaries, repeated state resets, timestamp precision, and accessibility led to concrete revisions.
+
+The **[development journal](docs/development-journal.md)** is the companion to the finished app. It records important decision points, my input, AI contributions, concepts discussed, and verification evidence—including changes of direction and checks we did not perform. For example, it traces the move from a separate timestamp-capture flow to Add Feedback locking the playback time, and the replacement of practice priorities with per-entry importance. It is a curated account of the collaboration rather than a complete prompt transcript.
+
+## What you can do
+
+- Set encounter, POV player/job, and pull notes alongside a local recording.
+- Watch with native playback controls; Add Feedback pauses and locks the current timestamp.
+- Save observations and suggested improvements with a category and importance from 1–5.
+- Seek from notes, edit entries inline, confirm deletion, and filter by category.
+- Restore your saved review after refreshing and reconnect the recording through metadata matching.
+
+There are no accounts, backend, user-video uploads, or AI-generated feedback. One local review is saved per browser/site; the hosted demo is a separate temporary session.
+
+## Reviewing your own recording
 
 Start with encounter, POV player, job, optional pull notes, and a playable video. Start review opens playback/feedback beneath a compact context header in the same panel. Edit context supports Save/Cancel without discarding notes or the connected recording.
 
@@ -20,9 +38,13 @@ The current saved format is version 2. Version-1 reviews migrate automatically: 
 
 Choose **Try demo recording** to explore the hosted M9S video without a local file. It loads only after opting in, with metadata preloading and no autoplay. The demo features Moharu Nn (Sage) in Vamp Fatale - M9S, with two feedback notes supplied by the recording’s owner at 1:07 and 5:06. Demo changes are temporary and never written over your saved review. **Reset demo** restores the starter notes; **Return to my review** restores your local session, including its selected video and unfinished inputs.
 
-The public source URL and starter notes live in `src/demo.ts`. The video is hosted on Vercel Blob; no Blob token or upload SDK is needed in the frontend. If hosting fails, retry or return to local review. Hobby transfer caps can temporarily make the public video unavailable.
+The public source URL and starter notes live in `src/demo.ts`. The video is hosted on Vercel Blob; no Blob token or upload SDK is needed in the frontend. If hosting fails, retry or return to local review. The demo depends on the availability of its public host.
 
-Data belongs to this browser and site address; localhost and production have separate storage. Clearing site data removes the saved review. Storage failures show a message while preserving the in-memory session. Invalid or unsupported saved data is left untouched until you confirm replacing it with the current working review. Video bytes and temporary playback URLs are never stored.
+## Storage and limitations
+
+Data belongs to this browser and site address; localhost and production have separate storage. Clearing site data removes the saved review. Storage failures show a message while preserving the in-memory session. Invalid or unsupported saved data is left untouched until you confirm replacing it with the current working review. Video bytes and temporary playback URLs are never stored. Metadata matching is a convenience check, not proof that two files have identical contents.
+
+The feedback table scrolls horizontally on small screens. Real-phone functionality was checked, but a more comfortable mobile editing layout is deferred. There is no review library, export/import, or sharing yet.
 
 ## Development
 
@@ -41,9 +63,25 @@ npm test
 npm run build
 ```
 
-Build runs TypeScript checks and creates the production bundle. GitHub Actions runs these same checks. Vercel deployment is a later project task.
+Build runs TypeScript checks and creates the production bundle. GitHub Actions runs these same checks. The live app is deployed on Vercel.
 
 Tests use Vitest, React Testing Library, user-event, and jsdom. Run `npm run test:watch` for feedback while editing. See the [testing guide](docs/testing-guide.md) for the first test and the remaining exercises.
+
+## Architecture and decisions
+
+`App` owns the persisted review and coordinates setup, readiness, and the isolated demo. `VideoReview` owns the selected file, media element reference, playback readiness, and recording-replacement flow. `FeedbackList`, `FeedbackItem`, and `FeedbackForm` handle filtering and table interactions. Shared types and utility functions centralize categories, importance, timestamp handling, validation, recording identity, and storage.
+
+Controlled inputs keep drafts separate from saved data. Functional state updates preserve unrelated fields. Refs access the native video element; effects synchronize localStorage and clean up temporary object URLs. Filtered/sorted entries are derived during rendering. Native HTML and plain CSS keep the dependency footprint small.
+
+## Verification
+
+The latest implementation checkpoint passed 98 tests, lint, and the production build. Tests cover timestamp and feedback validation, edits/deletion, persistence migration/recovery, recording matching, and demo isolation. jsdom media stubs test event handling; real playback was checked separately in Chromium against the deployed demo.
+
+Deployed setup/demo/edit states passed axe scans at 375, 768, and 1440 pixels. The developer reported successful real-phone use and browser zoom checks at 200% and 400%, with visible keyboard focus and no clipping or page-wide horizontal scrolling. Screen-reader testing was not performed. These checks cover selected flows and do not establish complete accessibility conformance. See the [verification report](docs/accessibility-check.md) for evidence and limits.
+
+## Project process
+
+The [project brief](docs/project-brief.md) records scope and the issue sequence. The [development journal](docs/development-journal.md) follows the implementation and learning behind those issues, documenting how developer decisions and AI assistance shaped the result.
 
 ## Working agreement
 
