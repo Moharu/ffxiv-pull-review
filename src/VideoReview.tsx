@@ -9,6 +9,8 @@ import { formatTimestamp } from "./utils/timestamps"
 import { validateFeedback } from "./utils/feedback"
 
 type VideoReviewProps = {
+  remoteSource?: string
+  isSuspended?: boolean
   isSettingUp: boolean
   onReadyChange: (ready: boolean) => void
   recording: RecordingIdentity | null
@@ -17,30 +19,35 @@ type VideoReviewProps = {
   onFeedbackChange: (update: (entries: FeedbackEntry[]) => FeedbackEntry[]) => void
 }
 
-function VideoReview({ isSettingUp, onReadyChange, recording, onRecordingChange, feedbackEntries, onFeedbackChange }: VideoReviewProps) {
+function VideoReview({ remoteSource, isSuspended = false, isSettingUp, onReadyChange, recording, onRecordingChange, feedbackEntries, onFeedbackChange }: VideoReviewProps) {
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [timestamp, setTimestamp] = useState<number | null>(null)
   const [duration, setDuration] = useState<number | null>(null)
   const [videoError, setVideoError] = useState("")
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [confirmNewReview, setConfirmNewReview] = useState(false)
+  const [retryVersion, setRetryVersion] = useState(0)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     const video = videoRef.current
-    if (!videoFile || !video) return
+    if ((!videoFile && !remoteSource) || !video) return
 
-    const url = URL.createObjectURL(videoFile)
+    const url = remoteSource ?? URL.createObjectURL(videoFile!)
     video.src = url
 
     return () => {
       video.pause()
       video.removeAttribute("src")
       video.load()
-      URL.revokeObjectURL(url)
+      if (!remoteSource) URL.revokeObjectURL(url)
     }
-  }, [videoFile])
+  }, [videoFile, remoteSource, retryVersion])
+
+  useEffect(() => {
+    if (isSuspended) videoRef.current?.pause()
+  }, [isSuspended])
 
   function clearTimestamp() {
     setTimestamp(null)
@@ -94,7 +101,9 @@ function VideoReview({ isSettingUp, onReadyChange, recording, onRecordingChange,
     if (!event.currentTarget.error) return
 
     onReadyChange(false)
-    setVideoError("This video could not be played. Its format may be unsupported or the file may be damaged. Select another video file.")
+    setVideoError(remoteSource
+      ? "The demo recording could not be loaded. Check your connection and retry, or return to your own review."
+      : "This video could not be played. Its format may be unsupported or the file may be damaged. Select another video file.")
     setDuration(null)
     clearTimestamp()
   }
@@ -121,7 +130,7 @@ function VideoReview({ isSettingUp, onReadyChange, recording, onRecordingChange,
   }
 
   function handleUpdateFeedback(updatedEntry: FeedbackEntry): string | null {
-    if (!videoFile || duration === null || videoError) return "Select a working recording before editing feedback."
+    if ((!videoFile && !remoteSource) || duration === null || videoError) return "Select a working recording before editing feedback."
     if (pendingFile) return "Choose which recording to use before saving feedback."
     const error = validateFeedback(updatedEntry, duration)
     if (error) return error
@@ -136,7 +145,7 @@ function VideoReview({ isSettingUp, onReadyChange, recording, onRecordingChange,
   }
 
   function handleDeleteFeedback(id: string) {
-    if (!videoFile || duration === null || videoError || pendingFile) return
+    if ((!videoFile && !remoteSource) || duration === null || videoError || pendingFile) return
     onFeedbackChange((previous) => previous.filter((entry) => entry.id !== id))
   }
 
@@ -159,6 +168,7 @@ function VideoReview({ isSettingUp, onReadyChange, recording, onRecordingChange,
   return (
     <section className="video-review" aria-labelledby="video-review-heading">
       <h2 id="video-review-heading">{isSettingUp ? "Recording" : "Recording playback"}</h2>
+      {!remoteSource && <>
       <p id="video-help" className="form-hint">
         Your video stays on this device. Select it again after refreshing.
       </p>
@@ -175,6 +185,7 @@ function VideoReview({ isSettingUp, onReadyChange, recording, onRecordingChange,
         onChange={handleFileChange}
       />
       {recording && <p className="form-hint">Review recording: {recording.name}</p>}
+      </>}
       {pendingFile && (
         <div className="removal-confirmation" role="group" aria-labelledby="recording-mismatch">
           <p id="recording-mismatch" role="alert">
@@ -200,11 +211,12 @@ function VideoReview({ isSettingUp, onReadyChange, recording, onRecordingChange,
           )}
         </div>
       )}
-      {videoFile && (
+      {(videoFile || remoteSource) && (
         <>
           <video
             ref={videoRef}
             controls
+            preload="metadata"
             onLoadedMetadata={handleLoadedMetadata}
             onError={handleVideoError}
           />
@@ -214,13 +226,20 @@ function VideoReview({ isSettingUp, onReadyChange, recording, onRecordingChange,
         </>
       )}
       {videoError && <Alert>{videoError}</Alert>}
-      {feedbackEntries.length > 0 && (!videoFile || duration === null || videoError || pendingFile) && (
-        <p className="form-hint">Feedback is read-only until a recording is connected and ready. Select the matching recording to edit, remove, or seek to notes.</p>
+      {remoteSource && videoError && <button type="button" onClick={() => {
+        setVideoError("")
+        setDuration(null)
+        setRetryVersion((previous) => previous + 1)
+      }}>Retry demo video</button>}
+      {feedbackEntries.length > 0 && ((!videoFile && !remoteSource) || duration === null || videoError || pendingFile) && (
+        <p className="form-hint">{remoteSource
+          ? "Demo feedback is read-only until the recording is ready."
+          : "Feedback is read-only until a recording is connected and ready. Select the matching recording to edit, remove, or seek to notes."}</p>
       )}
       {duration !== null && feedbackEntries.some((entry) => entry.timestamp > duration) && (
         <Alert>Some feedback timestamps exceed this recording's duration. Those moments cannot be sought; edit their timestamps or choose the original recording. Notes have been preserved.</Alert>
       )}
-      {!isSettingUp && (videoFile || feedbackEntries.length > 0) && <FeedbackList
+      {!isSettingUp && (videoFile || remoteSource || feedbackEntries.length > 0) && <FeedbackList
         timestamp={timestamp}
         onStartFeedback={handleStartFeedback}
         onCancelFeedback={clearTimestamp}

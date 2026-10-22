@@ -52,6 +52,21 @@ function savedRows() {
 }
 
 describe('VideoReview feedback mutations', () => {
+  it('pauses the local player for the demo and preserves the selected file and feedback on return', async () => {
+    const { user, video } = await setupRecording()
+    await addNote(user, video, 10, 'My local note')
+    video.currentTime = 25
+    const stored = localStorage.getItem('ffxiv-pull-review')
+    const pause = vi.spyOn(video, 'pause')
+    await user.click(screen.getByRole('button', { name: 'Try demo recording' }))
+    expect(pause).toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Return to my review' }))
+    expect(screen.getByRole('cell', { name: 'My local note' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Raid review' }).querySelector('video')).toBe(video)
+    expect(video.currentTime).toBe(25)
+    expect(localStorage.getItem('ffxiv-pull-review')).toBe(stored)
+  })
+
   it('requires valid context and playable video before starting, then shows a compact header', async () => {
     const user = userEvent.setup()
     const { container } = render(<App />)

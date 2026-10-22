@@ -1,6 +1,7 @@
 import RecordingContextForm from './RecordingContextForm'
 import VideoReview from './VideoReview'
-import { useCallback, useEffect, useState } from 'react'
+import DemoReview from './DemoReview'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Alert from './Alert'
 import { loadReview, saveReview } from './utils/storage'
 import type { FeedbackEntry, RecordingContext, RecordingIdentity, SavedReview } from './types'
@@ -8,6 +9,8 @@ import type { FeedbackEntry, RecordingContext, RecordingIdentity, SavedReview } 
 function App() {
   const focusReviewHeading = useCallback((heading: HTMLHeadingElement | null) => heading?.focus(), [])
   const [initialLoad] = useState(loadReview)
+  const [isDemo, setIsDemo] = useState(false)
+  const restoreDemoFocus = useRef(false)
   const [review, setReview] = useState<SavedReview>(initialLoad.review)
   const [storageEnabled, setStorageEnabled] = useState(initialLoad.error === null)
   const [writeError, setWriteError] = useState<string | null>(null)
@@ -66,6 +69,21 @@ function App() {
         Review your raid POV, record feedback at key moments, and identify
         the most important improvements for your next pulls.
       </p>
+      <div className="demo-entry">
+        <button type="button" hidden={isDemo} ref={(button) => {
+          if (button && restoreDemoFocus.current) {
+            button.focus()
+            restoreDemoFocus.current = false
+          }
+        }} onClick={() => {
+          setIsDemo(true)
+        }}>Try demo recording</button>
+        {!isDemo && <p className="form-hint">No recording handy? Explore the app with a hosted M9S demo.</p>}
+      </div>
+      {isDemo && <DemoReview onExit={() => {
+        setIsDemo(false)
+        restoreDemoFocus.current = true
+      }} />}
       {!storageEnabled && (
         <section aria-label="Storage recovery">
           <Alert>{initialLoad.error} Automatic saving is paused. You can continue working in this session.</Alert>
@@ -84,7 +102,7 @@ function App() {
           {storageEnabled && <button type="button" onClick={() => setWriteError(saveReview(review))}>Retry save</button>}
         </div>
       )}
-      <section className="review-panel" aria-label="Raid review">
+      <section hidden={isDemo} className="review-panel" aria-label="Raid review">
         {isSettingUp ? (
           <RecordingContextForm
             key={reviewGeneration}
@@ -106,6 +124,7 @@ function App() {
           </header>
         )}
         <VideoReview
+          isSuspended={isDemo}
           recording={review.recording}
           onRecordingChange={handleRecordingChange}
           feedbackEntries={review.feedbackEntries}

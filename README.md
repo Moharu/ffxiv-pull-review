@@ -16,6 +16,12 @@ Restored notes remain readable and filterable, but adding, editing, removal, and
 
 The current saved format is version 2. Version-1 reviews migrate automatically: the former Review Title field is removed while the remaining context, recording metadata, and feedback are preserved.
 
+## Demo recording
+
+Choose **Try demo recording** to explore the hosted M9S video without a local file. It loads only after opting in, with metadata preloading and no autoplay. The demo features Moharu Nn (Sage) in Vamp Fatale - M9S, with two feedback notes supplied by the recording’s owner at 1:07 and 5:06. Demo changes are temporary and never written over your saved review. **Reset demo** restores the starter notes; **Return to my review** restores your local session, including its selected video and unfinished inputs.
+
+The public source URL and starter notes live in `src/demo.ts`. The video is hosted on Vercel Blob; no Blob token or upload SDK is needed in the frontend. If hosting fails, retry or return to local review. Hobby transfer caps can temporarily make the public video unavailable.
+
 Data belongs to this browser and site address; localhost and production have separate storage. Clearing site data removes the saved review. Storage failures show a message while preserving the in-memory session. Invalid or unsupported saved data is left untouched until you confirm replacing it with the current working review. Video bytes and temporary playback URLs are never stored.
 
 ## Development
