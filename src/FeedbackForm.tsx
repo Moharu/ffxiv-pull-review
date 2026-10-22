@@ -1,17 +1,22 @@
 import { useState } from "react"
 import type { SubmitEvent } from "react"
 import Alert from "./Alert"
+import SaveCancelActions from "./SaveCancelActions"
+import ImportanceSelect from "./ImportanceSelect"
+import type { Importance } from "./types"
 import type { FeedbackCategory, FeedbackEntry } from "./types"
 import { feedbackCategories } from "./types"
 import { formatTimestamp } from "./utils/timestamps"
 
 type FeedbackFormProps = {
+  onCancel: () => void
   timestamp: number
   onAddFeedback: (entry: FeedbackEntry) => string | null
 }
 
-function FeedbackForm({ timestamp, onAddFeedback }: FeedbackFormProps) {
+function FeedbackForm({ timestamp, onAddFeedback, onCancel }: FeedbackFormProps) {
   const [category, setCategory] = useState<FeedbackCategory>(feedbackCategories[0])
+  const [importance, setImportance] = useState<Importance>(3)
   const [observation, setObservation] = useState("")
   const [suggestedImprovement, setSuggestedImprovement] = useState("")
   const [error, setError] = useState("")
@@ -27,6 +32,7 @@ function FeedbackForm({ timestamp, onAddFeedback }: FeedbackFormProps) {
     const newEntry: FeedbackEntry = {
       id: crypto.randomUUID(),
       timestamp,
+      importance,
       category,
       observation: observation.trim(),
       suggestedImprovement: suggestedImprovement.trim(),
@@ -50,7 +56,12 @@ function FeedbackForm({ timestamp, onAddFeedback }: FeedbackFormProps) {
       <tr className="feedback-row feedback-editor feedback-new-row">
         <td>
           <small>New feedback</small>
+          <span className="visually-hidden">Locked timestamp: </span>
           <span>{formatTimestamp(timestamp)}</span>
+        </td>
+        <td>
+          <ImportanceSelect autoFocus id="feedback-importance" form="feedback-form"
+            value={importance} onChange={setImportance} />
         </td>
         <td>
           <label className="visually-hidden" htmlFor="feedback-category">Category</label>
@@ -73,11 +84,11 @@ function FeedbackForm({ timestamp, onAddFeedback }: FeedbackFormProps) {
         </td>
         <td>
           <form id="feedback-form" className="feedback-row-actions" aria-label="Add feedback" onSubmit={handleSubmit}>
-            <button type="submit">Add feedback</button>
+            <SaveCancelActions onCancel={onCancel} />
           </form>
         </td>
       </tr>
-      {error && <tr><td colSpan={5}><Alert>{error}</Alert></td></tr>}
+      {error && <tr><td colSpan={6}><Alert>{error}</Alert></td></tr>}
     </>
   )
 }

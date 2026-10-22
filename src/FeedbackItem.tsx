@@ -1,6 +1,9 @@
 import { useRef, useState } from "react"
 import type { SubmitEvent } from "react"
 import Alert from "./Alert"
+import SaveCancelActions from "./SaveCancelActions"
+import ImportanceSelect from "./ImportanceSelect"
+import { importanceLabels } from "./types"
 import type { FeedbackCategory, FeedbackEntry } from "./types"
 import { feedbackCategories } from "./types"
 import { convertTimestampDraftToSeconds, formatTimestamp } from "./utils/timestamps"
@@ -81,6 +84,18 @@ function FeedbackItem({ entry, duration, onUpdate, onDelete, canSeek, onSeek }: 
         <td>
           {isEditing ? (
             <>
+              <ImportanceSelect id={`${prefix}-importance`} form={`${prefix}-editor`}
+                value={draft.importance} onChange={(importance) => setDraft({ ...draft, importance })} />
+            </>
+          ) : (
+            <span className={`importance-badge importance-${entry.importance}`}>
+              {entry.importance} · {importanceLabels[entry.importance]}
+            </span>
+          )}
+        </td>
+        <td>
+          {isEditing ? (
+            <>
               <label className="visually-hidden" htmlFor={`${prefix}-category`}>Category</label>
               <select id={`${prefix}-category`} form={`${prefix}-editor`} value={draft.category}
                 onChange={(event) => setDraft({ ...draft, category: event.target.value as FeedbackCategory })}>
@@ -113,8 +128,7 @@ function FeedbackItem({ entry, duration, onUpdate, onDelete, canSeek, onSeek }: 
           {isEditing ? (
             <form id={`${prefix}-editor`} className="feedback-row-actions" onSubmit={handleSave}
               aria-label={`Edit feedback at ${formatTimestamp(entry.timestamp)}: ${entry.observation}`}>
-              <button type="submit">Save</button>
-              <button type="button" onClick={closeEditor}>Cancel</button>
+              <SaveCancelActions onCancel={closeEditor} />
             </form>
           ) : (
             <div className="feedback-row-actions">
@@ -146,11 +160,11 @@ function FeedbackItem({ entry, duration, onUpdate, onDelete, canSeek, onSeek }: 
         </td>
       </tr>
       {isEditing && error && (
-        <tr><td colSpan={5}><Alert>{error}</Alert></td></tr>
+        <tr><td colSpan={6}><Alert>{error}</Alert></td></tr>
       )}
       {isConfirmingRemoval && (
         <tr>
-          <td colSpan={5}>
+          <td colSpan={6}>
             <div id={`${prefix}-removal`} className="removal-confirmation" role="group"
               aria-labelledby={`${prefix}-removal-label`}>
               <p id={`${prefix}-removal-label`}>Remove feedback at {formatTimestamp(entry.timestamp)}? This cannot be undone.</p>

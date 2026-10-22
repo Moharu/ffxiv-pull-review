@@ -35,10 +35,10 @@ async function setupRecording() {
 
 async function addNote(user: ReturnType<typeof userEvent.setup>, video: HTMLVideoElement, seconds: number, observation: string) {
   video.currentTime = seconds
-  await user.click(screen.getByRole('button', { name: 'Capture timestamp' }))
+  await user.click(screen.getByRole('button', { name: 'Add Feedback' }))
   await user.type(screen.getByRole('textbox', { name: 'Observation' }), observation)
   await user.type(screen.getByRole('textbox', { name: 'Suggested improvement' }), 'Move on the cast.')
-  await user.click(screen.getByRole('button', { name: 'Add feedback' }))
+  await user.click(screen.getByRole('button', { name: 'Save' }))
 }
 
 function savedRows() {
@@ -48,6 +48,112 @@ function savedRows() {
 }
 
 describe('VideoReview feedback mutations', () => {
+  it('hides feedback before selection and hides the table until a draft is opened', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<VideoReview />)
+    expect(screen.queryByRole('button', { name: 'Add Feedback' })).not.toBeInTheDocument()
+    await user.upload(screen.getByLabelText('Select a local video'),
+      new File(['sample'], 'raid.mp4', { type: 'video/mp4' }))
+    expect(screen.getByRole('button', { name: 'Add Feedback' })).toBeDisabled()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    fireEvent.loadedMetadata(container.querySelector('video')!)
+    expect(screen.getByRole('button', { name: 'Add Feedback' })).toBeEnabled()
+  })
+
+  it('pauses and locks whole seconds on Add Feedback, even if playback moves before saving', async () => {
+    const { user, video } = await setupRecording()
+    video.currentTime = 10.9
+    await user.click(screen.getByRole('button', { name: 'Add Feedback' }))
+    expect(video.pause).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('button', { name: 'Add Feedback' })).toBeDisabled()
+    expect(screen.getByRole('combobox', { name: 'Importance' })).toHaveFocus()
+    // A resumed player can move without changing the draft's locked time.
+    video.currentTime = 35
+    fireEvent.timeUpdate(video)
+    await user.type(screen.getByRole('textbox', { name: 'Observation' }), 'Locked note')
+    await user.type(screen.getByRole('textbox', { name: 'Suggested improvement' }), 'Act earlier')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    expect(screen.getByRole('button', { name: 'Seek to 0:10' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Seek to 0:35' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: 'Observation' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Add Feedback' })).toHaveFocus()
+  })
+
+  it('cancels a new draft without saving and starts a fresh draft next time', async () => {
+    const { user, video } = await setupRecording()
+    video.currentTime = 10
+    await user.click(screen.getByRole('button', { name: 'Add Feedback' }))
+    await user.type(screen.getByRole('textbox', { name: 'Observation' }), 'Discard me')
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(screen.getByText('0 feedback entries', { exact: true })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Add Feedback' })).toHaveFocus()
+    video.currentTime = 20
+    await user.click(screen.getByRole('button', { name: 'Add Feedback' }))
+    expect(screen.getByRole('textbox', { name: 'Observation' })).toHaveValue('')
+    expect(screen.getByRole('cell', { name: /Locked timestamp:\s*0:20/ })).toBeInTheDocument()
+  })
+
+  it('keeps a rejected new draft and its locked timestamp until cancelled', async () => {
+    const { user, video } = await setupRecording()
+    video.currentTime = 10
+    await user.click(screen.getByRole('button', { name: 'Add Feedback' }))
+    await user.type(screen.getByRole('textbox', { name: 'Observation' }), '   ')
+    await user.type(screen.getByRole('textbox', { name: 'Suggested improvement' }), 'Keep my draft')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: 'Suggested improvement' })).toHaveValue('Keep my draft')
+    expect(screen.getByText('0 feedback entries', { exact: true })).toBeInTheDocument()
+  })
+
+  it('filters saved entries without losing them or filtering out an open new draft', async () => {
+    const { user, video } = await setupRecording()
+    await addNote(user, video, 10, 'Mechanics note')
+    video.currentTime = 20
+    await user.click(screen.getByRole('button', { name: 'Add Feedback' }))
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Category' }), 'Mitigation')
+    await user.type(screen.getByRole('textbox', { name: 'Observation' }), 'Mitigation note')
+    await user.type(screen.getByRole('textbox', { name: 'Suggested improvement' }), 'Use a cooldown')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    const filter = screen.getByRole('combobox', { name: 'Filter by category' })
+    await user.selectOptions(filter, 'Mitigation')
+    expect(savedRows()).toHaveLength(1)
+    expect(savedRows()[0]).toHaveTextContent('Mitigation note')
+    expect(screen.getByText('Showing 1 of 2 feedback entries')).toBeInTheDocument()
+    await user.selectOptions(filter, 'Other')
+    expect(screen.getByText('No feedback matches this category.')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Add Feedback' }))
+    expect(screen.getByRole('textbox', { name: 'Observation' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    await user.selectOptions(filter, 'All')
+    expect(savedRows()).toHaveLength(2)
+    expect(savedRows()[0]).toHaveTextContent('Mechanics note')
+    expect(savedRows()[1]).toHaveTextContent('Mitigation note')
+  })
+
+  it('defaults importance to 3, saves a chosen level, and supports cancelling and saving edits', async () => {
+    const { user } = await setupRecording()
+    await user.click(screen.getByRole('button', { name: 'Add Feedback' }))
+    expect(screen.getByRole('combobox', { name: 'Importance' })).toHaveValue('3')
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Importance' }), '5')
+    await user.type(screen.getByRole('textbox', { name: 'Observation' }), 'Important note')
+    await user.type(screen.getByRole('textbox', { name: 'Suggested improvement' }), 'Avoid the hit')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    const row = savedRows()[0]
+    expect(within(row).getByRole('cell', { name: '5 · Critical' })).toBeInTheDocument()
+    await user.click(within(row).getByRole('button', { name: /^Edit feedback/ }))
+    expect(within(row).getByRole('combobox', { name: 'Importance' })).toHaveValue('5')
+    await user.selectOptions(within(row).getByRole('combobox', { name: 'Importance' }), '1')
+    await user.click(within(row).getByRole('button', { name: 'Cancel' }))
+    expect(within(row).getByRole('cell', { name: '5 · Critical' })).toBeInTheDocument()
+    await user.click(within(row).getByRole('button', { name: /^Edit feedback/ }))
+    await user.selectOptions(within(row).getByRole('combobox', { name: 'Importance' }), '1')
+    await user.click(within(row).getByRole('button', { name: 'Save' }))
+    expect(within(row).getByRole('cell', { name: '1 · Low' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Add Feedback' }))
+    expect(screen.getByRole('combobox', { name: 'Importance' })).toHaveValue('3')
+  })
+
   it('saves only the selected entry, preserves its identity, and reorders after a time change', async () => {
     const { user, video } = await setupRecording()
     await addNote(user, video, 10, 'First note')
@@ -134,12 +240,12 @@ describe('VideoReview feedback mutations', () => {
     expect(savedRows()).toHaveLength(1)
     expect(savedRows()[0]).toHaveTextContent('Second note')
     expect(screen.queryByRole('cell', { name: 'First note' })).not.toBeInTheDocument()
-    expect(screen.getByText('Feedback entries: 1', { exact: true })).toHaveFocus()
+    expect(screen.getByText('1 feedback entry', { exact: true })).toHaveFocus()
 
     await user.click(screen.getByRole('button', { name: 'Remove feedback at 0:20: Second note' }))
     await user.click(screen.getByRole('button', { name: 'Remove' }))
     expect(screen.queryByRole('button', { name: /^Edit feedback at/ })).not.toBeInTheDocument()
-    expect(screen.getByText('No feedback yet. Capture a timestamp and add a note to begin.')).toBeInTheDocument()
-    expect(screen.getByText('Feedback entries: 0', { exact: true })).toHaveFocus()
+    expect(screen.getByText('No feedback yet. Choose Add Feedback at a moment you want to review.')).toBeInTheDocument()
+    expect(screen.getByText('0 feedback entries', { exact: true })).toHaveFocus()
   })
 })

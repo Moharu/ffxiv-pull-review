@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { validateFeedback } from './feedback'
+import type { Importance } from '../types'
 
 const validFeedbackEntry = {
   id: '1',
   timestamp: 0,
+  importance: 3 as const,
   category: 'Mechanics' as const,
   observation: 'This is a valid observation.',
   suggestedImprovement: 'This is a valid suggested improvement.',
@@ -12,6 +14,13 @@ const validFeedbackEntry = {
 const testDuration = 20
 
 describe('validateFeedback', () => {
+  it.each([1, 2, 3, 4, 5] as const)('accepts importance %s', (importance) => {
+    expect(validateFeedback({ ...validFeedbackEntry, importance }, testDuration)).toBeNull()
+  })
+  it.each([0, 6, 2.5, NaN, Infinity, '3', undefined])('rejects invalid importance %s at runtime', (importance) => {
+    expect(validateFeedback({ ...validFeedbackEntry, importance: importance as Importance }, testDuration))
+      .toEqual(expect.any(String))
+  })
   it('returns null for valid feedback', () => {
     expect(validateFeedback(validFeedbackEntry, testDuration)).toBeNull()
   })

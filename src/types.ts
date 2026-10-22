@@ -8,9 +8,20 @@ export const feedbackCategories = [
 
 export type FeedbackCategory = (typeof feedbackCategories)[number]
 
+export const importanceLevels = [1, 2, 3, 4, 5] as const
+export type Importance = (typeof importanceLevels)[number]
+export const importanceLabels: Record<Importance, string> = {
+  1: "Low",
+  2: "Minor",
+  3: "Moderate",
+  4: "High",
+  5: "Critical",
+}
+
 export type FeedbackEntry = {
   id: string
   timestamp: number
+  importance: Importance
   category: FeedbackCategory
   observation: string
   suggestedImprovement: string

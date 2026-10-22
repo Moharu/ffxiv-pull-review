@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react"
 import type { ChangeEvent, SyntheticEvent } from "react"
 import Alert from "./Alert"
 import FeedbackList from "./FeedbackList"
-import TimestampEditor from "./TimestampEditor"
 import type { FeedbackEntry } from "./types"
 
 import { formatTimestamp } from "./utils/timestamps"
@@ -12,11 +11,9 @@ function VideoReview() {
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [timestamp, setTimestamp] = useState<number | null>(null)
   const [duration, setDuration] = useState<number | null>(null)
-  const [captureVersion, setCaptureVersion] = useState(0)
   const [videoError, setVideoError] = useState("")
   const [feedbackEntries, setFeedbackEntries] = useState<FeedbackEntry[]>([])
   const videoRef = useRef<HTMLVideoElement | null>(null)
-  const captureButtonRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
     const video = videoRef.current
@@ -66,20 +63,15 @@ function VideoReview() {
     clearTimestamp()
   }
 
-  function handleCaptureTimestamp() {
+  function handleStartFeedback() {
     const video = videoRef.current
-    if (!video || video.readyState < 1 || video.error || videoError) return
+    if (!video || video.readyState < 1 || video.error || videoError || duration === null) return
 
-    setTimestamp(Math.floor(video.currentTime))
-    // Reset the editor draft on every capture, even at the same playback time.
-    setCaptureVersion((previous) => previous + 1)
-  }
+    const seconds = Math.floor(video.currentTime)
+    if (!Number.isFinite(seconds) || seconds < 0 || seconds > duration) return
 
-  function handleRemoveTimestamp() {
-    if (!window.confirm("Remove the captured timestamp?")) return
-
-    clearTimestamp()
-    captureButtonRef.current?.focus()
+    video.pause()
+    setTimestamp(seconds)
   }
 
   function handleAddFeedback(entry: FeedbackEntry): string | null {
@@ -87,6 +79,7 @@ function VideoReview() {
     if (error) return error
 
     setFeedbackEntries((previous) => [...previous, entry])
+    setTimestamp(null)
     return null
   }
 
@@ -148,31 +141,13 @@ function VideoReview() {
           {duration !== null && (
             <p>Recording duration: {formatTimestamp(duration)}</p>
           )}
-          <button
-            ref={captureButtonRef}
-            type="button"
-            disabled={duration === null || videoError !== ""}
-            onClick={handleCaptureTimestamp}
-          >
-            Capture timestamp
-          </button>
         </>
       )}
       {videoError && <Alert>{videoError}</Alert>}
-      <p role="status">
-        {timestamp !== null && `Captured time: ${formatTimestamp(timestamp)}`}
-      </p>
-      {timestamp !== null && duration !== null && (
-        <TimestampEditor
-          key={captureVersion}
-          timestamp={timestamp}
-          duration={duration}
-          onApply={setTimestamp}
-          onRemove={handleRemoveTimestamp}
-        />
-      )}
-      <FeedbackList
+      {videoFile && <FeedbackList
         timestamp={timestamp}
+        onStartFeedback={handleStartFeedback}
+        onCancelFeedback={clearTimestamp}
         onAddFeedback={handleAddFeedback}
         entries={feedbackEntries}
         duration={duration}
@@ -180,7 +155,7 @@ function VideoReview() {
         onDelete={handleDeleteFeedback}
         canSeek={duration !== null && videoError === ""}
         onSeek={handleSeek}
-      />
+      />}
     </section>
   )
 }

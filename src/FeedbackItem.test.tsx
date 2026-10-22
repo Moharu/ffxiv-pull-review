@@ -7,6 +7,7 @@ import type { FeedbackEntry } from './types'
 const entry: FeedbackEntry = {
   id: 'feedback-1',
   timestamp: 10,
+  importance: 3,
   category: 'Mechanics',
   observation: 'Moved too late.',
   suggestedImprovement: 'Start moving when the cast begins.',

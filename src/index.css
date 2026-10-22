@@ -126,6 +126,20 @@ main > p:not(.eyebrow) {
   border-radius: 0.5rem;
 }
 
+.feedback-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.feedback-toolbar select {
+  max-width: 100%;
+  padding: 0.5rem;
+  font: inherit;
+}
+
 .feedback-table {
   width: 100%;
   min-width: 0;
@@ -148,11 +162,26 @@ main > p:not(.eyebrow) {
   background: #f4f6fa;
 }
 
-.feedback-table th:nth-child(1) { width: 13%; }
-.feedback-table th:nth-child(2) { width: 16%; }
-.feedback-table th:nth-child(3),
-.feedback-table th:nth-child(4) { width: 26%; }
-.feedback-table th:nth-child(5) { width: 19%; }
+.feedback-table th:nth-child(1) { width: 11%; }
+.feedback-table th:nth-child(2) { width: 13%; }
+.feedback-table th:nth-child(3) { width: 14%; }
+.feedback-table th:nth-child(4),
+.feedback-table th:nth-child(5) { width: 23%; }
+.feedback-table th:nth-child(6) { width: 16%; }
+
+.importance-badge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid;
+  border-radius: 1rem;
+  font-weight: 700;
+}
+
+.importance-1 { background: #dcfce7; color: #14532d; border-color: #86b99a; }
+.importance-2 { background: #ecfccb; color: #365314; border-color: #a3bc78; }
+.importance-3 { background: #fef9c3; color: #713f12; border-color: #c9b461; }
+.importance-4 { background: #ffedd5; color: #7c2d12; border-color: #d5a57f; }
+.importance-5 { background: #fee2e2; color: #7f1d1d; border-color: #d59a9a; }
 
 .feedback-row-actions {
   display: flex;
