@@ -1,5 +1,6 @@
 import { useState } from "react"
 import Alert from "./Alert"
+import type { RecordingContext } from "./types"
 
 const combatJobs = [
   "Paladin", "Warrior", "Dark Knight", "Gunbreaker",
@@ -9,13 +10,6 @@ const combatJobs = [
   "Black Mage", "Summoner", "Red Mage", "Pictomancer",
 ]
 
-type RecordingContext = {
-  title: string
-  encounter: string
-  playerName: string
-  playerJob: string
-  pullNotes: string
-}
 type TextFieldProps = {
   id: string
   label: string
@@ -49,14 +43,17 @@ const TextField = ({
   </div>
 )
 
-function RecordingContextForm() {
-  const [savedContext, setSavedContext] =
-    useState<RecordingContext | null>(null)
-  const [title, setTitle] = useState("")
-  const [encounter, setEncounter] = useState("")
-  const [playerName, setPlayerName] = useState("")
-  const [playerJob, setPlayerJob] = useState("")
-  const [pullNotes, setPullNotes] = useState("")
+type RecordingContextFormProps = {
+  savedContext: RecordingContext | null
+  onSaveContext: (context: RecordingContext) => void
+}
+
+function RecordingContextForm({ savedContext, onSaveContext }: RecordingContextFormProps) {
+  const [title, setTitle] = useState(savedContext?.title ?? "")
+  const [encounter, setEncounter] = useState(savedContext?.encounter ?? "")
+  const [playerName, setPlayerName] = useState(savedContext?.playerName ?? "")
+  const [playerJob, setPlayerJob] = useState(savedContext?.playerJob ?? "")
+  const [pullNotes, setPullNotes] = useState(savedContext?.pullNotes ?? "")
   const [error, setError] = useState("")
   return (
     <section className="context-card" aria-labelledby="recording-context">
@@ -72,7 +69,7 @@ function RecordingContextForm() {
           }
 
           setError("")
-          setSavedContext({
+          onSaveContext({
             title: title.trim(),
             encounter: encounter.trim(),
             playerName: playerName.trim(),
@@ -136,7 +133,7 @@ function RecordingContextForm() {
       </form>
       {savedContext && (
         <p role="status">
-          Context saved for “{savedContext.title}” in this session.
+          Context saved for “{savedContext.title}”.
         </p>
       )}
     </section>

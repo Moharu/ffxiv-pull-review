@@ -25,6 +25,7 @@ describe('FeedbackItem', () => {
             entry={entry}
             duration={60}
             canSeek
+            canModify
             onSeek={vi.fn()}
             onUpdate={onUpdate}
             onDelete={vi.fn()}
@@ -58,6 +59,7 @@ describe('FeedbackItem', () => {
             entry={entry}
             duration={60}
             canSeek
+            canModify
             onSeek={vi.fn()}
             onUpdate={onUpdate}
             onDelete={vi.fn()}
@@ -89,6 +91,7 @@ describe('FeedbackItem', () => {
             entry={entry}
             duration={60}
             canSeek
+            canModify
             onSeek={vi.fn()}
             onUpdate={vi.fn(() => null)}
             onDelete={onDelete}
@@ -107,7 +110,7 @@ describe('FeedbackItem', () => {
     const onDelete = vi.fn()
     render(
       <table><tbody>
-        <FeedbackItem entry={entry} duration={60} canSeek onSeek={vi.fn()}
+        <FeedbackItem entry={entry} duration={60} canSeek canModify onSeek={vi.fn()}
           onUpdate={vi.fn(() => null)} onDelete={onDelete} />
       </tbody></table>,
     )

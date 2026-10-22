@@ -6,6 +6,14 @@ Start with the [project brief](docs/project-brief.md). Implementation proceeds o
 
 The [development journal](docs/development-journal.md) records decisions, learning, and how AI contributed.
 
+## Local persistence
+
+Saved context and feedback are stored in this browser's localStorage under `ffxiv-pull-review`. Open form drafts and filter choices are not saved. After refreshing, select the recording again; its name, size, and last-modified time are compared to the saved identity. A mismatch requires an explicit choice before reconnecting playback.
+
+Restored notes remain readable and filterable, but adding, editing, removal, and seeking are disabled until a recording is connected and ready.
+
+Data belongs to this browser and site address; localhost and production have separate storage. Clearing site data removes the saved review. Storage failures show a message while preserving the in-memory session. Invalid or unsupported saved data is left untouched until you confirm replacing it with the current working review. Video bytes and temporary playback URLs are never stored.
+
 ## Development
 
 Use Node.js 24 LTS and npm. After setup:

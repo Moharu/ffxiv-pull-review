@@ -8,7 +8,7 @@ The portfolio should demonstrate typed React state, accessible forms, media inte
 
 ## MVP boundaries
 
-- One active recording/review. Context: review title, encounter, POV player name, job, and optional pull notes.
+- One active recording/review. Target context: encounter, POV player name, job, and optional pull notes. Issue #8 removes the existing Review Title field and moves required video selection into the setup form.
 - Select a browser-playable local video through a file input and play it with native video controls. Do not upload or commit footage. The user must select the file again after reload; explain this in the interface.
 - Add Feedback pauses the player and opens a new-entry row with its current whole-second timestamp locked. Playback can resume without changing the draft's time. Save adds the entry and closes the draft; Cancel discards it. Saved timestamps can be corrected within the loaded video's duration through inline editing. Selecting a feedback timestamp seeks the video.
 - Each feedback entry has an ID, timestamp, importance (1–5), category, observation, and suggested improvement.
@@ -17,13 +17,14 @@ The portfolio should demonstrate typed React state, accessible forms, media inte
 - Filter feedback by category.
 - Each feedback entry has Importance from 1 (Low) to 5 (Critical), defaulting to 3 (Moderate). Show it between Timestamp and Category as a numbered, labelled badge colored green through yellow to red. Creation and editing use the same scale; color is not the only cue. Broader goals can be written in pull notes; there is no separate practice-priority feature.
 - Persist context and feedback (including importance) in versioned localStorage. Never persist video bytes or an object URL. Handle invalid data and failed writes visibly without breaking the session.
+- Associate the review with filename, byte size, and last-modified time. On reselection, treat equal metadata as a likely match; require an explicit choice for a mismatch before reconnecting notes to playback. Check loaded duration against saved timestamps too. Metadata matching is not a content hash.
 - Work on narrow and wide screens with semantic controls, labels, visible focus, keyboard operation, and understandable validation.
 
 No backend, accounts, video uploads, AI features, multiple-review library, sharing, custom timeline, rich-text editor, or category management. Export/import and automated feedback are future ideas.
 
 ## Main user flow
 
-1. Enter recording context and select the supplied video.
+1. Enter recording context and select a playable video in one setup panel, then choose Start review. Issue #8 implements this transition and replaces the form with a compact context header above playback, with Edit context available.
 2. Watch and choose Add Feedback at a relevant moment; the player pauses and the draft locks that timestamp.
 3. Record an observation and a concrete suggested improvement for the POV player, then Save or Cancel. Playback may resume while drafting.
 4. Revisit timestamps, edit notes, and filter categories.

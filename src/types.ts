@@ -26,3 +26,24 @@ export type FeedbackEntry = {
   observation: string
   suggestedImprovement: string
 }
+
+export type RecordingContext = {
+  title: string
+  encounter: string
+  playerName: string
+  playerJob: string
+  pullNotes: string
+}
+
+export type RecordingIdentity = {
+  name: string
+  size: number
+  lastModified: number
+}
+
+export type SavedReview = {
+  version: 1
+  recording: RecordingIdentity | null
+  context: RecordingContext | null
+  feedbackEntries: FeedbackEntry[]
+}

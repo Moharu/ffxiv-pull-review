@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import VideoReview from './VideoReview'
+import App from './App'
 
 beforeEach(() => {
   // jsdom does not decode video. Supply only the browser APIs needed by this flow.
@@ -24,9 +24,9 @@ afterEach(() => {
 
 async function setupRecording() {
   const user = userEvent.setup()
-  const { container } = render(<VideoReview />)
+  const { container } = render(<App />)
   await user.upload(screen.getByLabelText('Select a local video'),
-    new File(['sample'], 'raid.mp4', { type: 'video/mp4' }))
+    new File(['sample'], 'raid.mp4', { type: 'video/mp4', lastModified: 123456 }))
   // Video has no implicit accessibility role. Metadata is a browser event, not a user action.
   const video = container.querySelector('video')!
   fireEvent.loadedMetadata(video)
@@ -48,12 +48,81 @@ function savedRows() {
 }
 
 describe('VideoReview feedback mutations', () => {
+  it('reconnects matching metadata and preserves notes', async () => {
+    const { user, video } = await setupRecording()
+    await addNote(user, video, 10, 'Keep this note')
+    await user.upload(screen.getByLabelText('Select a local video'),
+      new File(['sample'], 'raid.mp4', { type: 'video/mp4', lastModified: 123456 }))
+    expect(screen.queryByRole('group', { name: /does not match/ })).not.toBeInTheDocument()
+    fireEvent.loadedMetadata(video)
+    expect(savedRows()[0]).toHaveTextContent('Keep this note')
+    expect(screen.getByRole('button', { name: 'Add Feedback' })).toBeEnabled()
+  })
+
+  it('keeps the original recording on mismatch cancellation and checks duration on explicit override', async () => {
+    const { user, video } = await setupRecording()
+    await addNote(user, video, 40, 'Keep this note')
+    const replacement = new File(['different'], 'other.mp4', { type: 'video/mp4' })
+    await user.upload(screen.getByLabelText('Select a local video'), replacement)
+    expect(screen.getByRole('group', { name: /does not match/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Add Feedback' })).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Choose another file' }))
+    expect(savedRows()[0]).toHaveTextContent('Keep this note')
+    expect(screen.getByRole('button', { name: 'Seek to 0:40' })).toBeEnabled()
+    await user.upload(screen.getByLabelText('Select a local video'), replacement)
+    await user.click(screen.getByRole('button', { name: 'Use this recording anyway' }))
+    vi.spyOn(HTMLMediaElement.prototype, 'duration', 'get').mockReturnValue(20)
+    fireEvent.loadedMetadata(video)
+    expect(screen.getByRole('alert')).toHaveTextContent('Some feedback timestamps exceed')
+    expect(savedRows()[0]).toHaveTextContent('Keep this note')
+    expect(screen.getByRole('button', { name: 'Seek to 0:40' })).toBeDisabled()
+    expect(screen.getByText('Review recording: other.mp4')).toBeInTheDocument()
+  })
+
+  it('clears notes and context only after confirming a new review', async () => {
+    const { user, video } = await setupRecording()
+    await addNote(user, video, 10, 'Old note')
+    await user.type(screen.getByRole('textbox', { name: /Review title/ }), 'Unsaved context')
+    await user.upload(screen.getByLabelText('Select a local video'),
+      new File(['different'], 'new.mp4', { type: 'video/mp4' }))
+    await user.click(screen.getByRole('button', { name: 'Start a new review' }))
+    expect(savedRows()[0]).toHaveTextContent('Old note')
+    await user.click(screen.getByRole('button', { name: 'Back' }))
+    expect(screen.getByRole('textbox', { name: /Review title/ })).toHaveValue('Unsaved context')
+    await user.click(screen.getByRole('button', { name: 'Start a new review' }))
+    await user.click(screen.getByRole('button', { name: 'Confirm new review' }))
+    expect(screen.queryByRole('cell', { name: 'Old note' })).not.toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: /Review title/ })).toHaveValue('')
+    expect(screen.getByText('Review recording: new.mp4')).toBeInTheDocument()
+    fireEvent.loadedMetadata(video)
+    expect(screen.getByRole('button', { name: 'Add Feedback' })).toBeEnabled()
+  })
+
+  it('keeps context and feedback when either part of the shared review changes', async () => {
+    const { user, video } = await setupRecording()
+    await addNote(user, video, 10, 'Existing feedback')
+    await user.type(screen.getByRole('textbox', { name: /Review title/ }), 'Raid review')
+    await user.type(screen.getByRole('textbox', { name: /Encounter/ }), 'Test encounter')
+    await user.type(screen.getByRole('textbox', { name: /Player name/ }), 'POV player')
+    await user.selectOptions(screen.getByRole('combobox', { name: /Player job/ }), 'Paladin')
+    await user.click(screen.getByRole('button', { name: 'Save context' }))
+    expect(savedRows()[0]).toHaveTextContent('Existing feedback')
+    expect(screen.getByRole('status')).toHaveTextContent('Context saved for “Raid review”')
+
+    // Unsaved typing stays local even when feedback updates the parent object.
+    await user.type(screen.getByRole('textbox', { name: /Review title/ }), ' draft')
+    await addNote(user, video, 20, 'Another note')
+    expect(savedRows()).toHaveLength(2)
+    expect(screen.getByRole('textbox', { name: /Review title/ })).toHaveValue('Raid review draft')
+    expect(screen.getByRole('status')).toHaveTextContent('Context saved for “Raid review”')
+  })
+
   it('hides feedback before selection and hides the table until a draft is opened', async () => {
     const user = userEvent.setup()
-    const { container } = render(<VideoReview />)
+    const { container } = render(<App />)
     expect(screen.queryByRole('button', { name: 'Add Feedback' })).not.toBeInTheDocument()
     await user.upload(screen.getByLabelText('Select a local video'),
-      new File(['sample'], 'raid.mp4', { type: 'video/mp4' }))
+      new File(['sample'], 'raid.mp4', { type: 'video/mp4', lastModified: 123456 }))
     expect(screen.getByRole('button', { name: 'Add Feedback' })).toBeDisabled()
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
     fireEvent.loadedMetadata(container.querySelector('video')!)

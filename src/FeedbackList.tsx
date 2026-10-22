@@ -96,7 +96,8 @@ function FeedbackList({ onStartFeedback, onCancelFeedback, timestamp, onAddFeedb
             duration={duration}
             onUpdate={onUpdate}
             onDelete={handleDelete}
-            canSeek={canSeek}
+            canSeek={canSeek && duration !== null && entry.timestamp <= duration}
+            canModify={canSeek}
             onSeek={onSeek}
           />
         ))}

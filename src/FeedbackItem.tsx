@@ -14,10 +14,11 @@ type FeedbackItemProps = {
   onUpdate: (entry: FeedbackEntry) => string | null
   onDelete: (id: string) => void
   canSeek: boolean
+  canModify: boolean
   onSeek: (seconds: number) => void
 }
 
-function FeedbackItem({ entry, duration, onUpdate, onDelete, canSeek, onSeek }: FeedbackItemProps) {
+function FeedbackItem({ entry, duration, onUpdate, onDelete, canSeek, canModify, onSeek }: FeedbackItemProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [timeDraft, setTimeDraft] = useState("")
   const [draft, setDraft] = useState(entry)
@@ -29,6 +30,7 @@ function FeedbackItem({ entry, duration, onUpdate, onDelete, canSeek, onSeek }: 
   const prefix = `feedback-${entry.id}`
 
   function handleEdit() {
+    if (!canModify) return
     setDraft(entry)
     setTimeDraft(formatTimestamp(entry.timestamp))
     setError("")
@@ -43,6 +45,7 @@ function FeedbackItem({ entry, duration, onUpdate, onDelete, canSeek, onSeek }: 
 
   function handleSave(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (!canModify) return
     const parsedTime = convertTimestampDraftToSeconds(timeDraft)
     if (parsedTime === null) {
       setError("Enter a timestamp in m:ss format, such as 1:35. Seconds must be between 00 and 59.")
@@ -141,12 +144,13 @@ function FeedbackItem({ entry, duration, onUpdate, onDelete, canSeek, onSeek }: 
                   }
                 }}
                 type="button" className="feedback-icon" aria-label={`Edit feedback at ${formatTimestamp(entry.timestamp)}: ${entry.observation}`}
-                disabled={isConfirmingRemoval} onClick={handleEdit}>
+                disabled={!canModify || isConfirmingRemoval} onClick={handleEdit}>
                 <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15l-1 6Z" />
                 </svg>
               </button>
               <button ref={removeButtonRef} type="button" className="feedback-icon feedback-icon-remove"
+                disabled={!canModify}
                 aria-label={`Remove feedback at ${formatTimestamp(entry.timestamp)}: ${entry.observation}`}
                 aria-expanded={isConfirmingRemoval}
                 aria-controls={isConfirmingRemoval ? `${prefix}-removal` : undefined}
@@ -169,7 +173,7 @@ function FeedbackItem({ entry, duration, onUpdate, onDelete, canSeek, onSeek }: 
               aria-labelledby={`${prefix}-removal-label`}>
               <p id={`${prefix}-removal-label`}>Remove feedback at {formatTimestamp(entry.timestamp)}? This cannot be undone.</p>
               <div className="feedback-row-actions">
-                <button type="button" className="remove-timestamp" onClick={() => onDelete(entry.id)}>Remove</button>
+                <button type="button" className="remove-timestamp" disabled={!canModify} onClick={() => onDelete(entry.id)}>Remove</button>
                 <button autoFocus type="button" onClick={() => {
                   setIsConfirmingRemoval(false)
                   removeButtonRef.current?.focus()

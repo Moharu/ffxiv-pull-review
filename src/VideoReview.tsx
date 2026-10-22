@@ -2,18 +2,28 @@ import { useEffect, useRef, useState } from "react"
 import type { ChangeEvent, SyntheticEvent } from "react"
 import Alert from "./Alert"
 import FeedbackList from "./FeedbackList"
-import type { FeedbackEntry } from "./types"
+import type { FeedbackEntry, RecordingIdentity } from "./types"
+import { getRecordingIdentity, matchesRecording } from "./utils/recording"
 
 import { formatTimestamp } from "./utils/timestamps"
 import { validateFeedback } from "./utils/feedback"
 
-function VideoReview() {
+type VideoReviewProps = {
+  recording: RecordingIdentity | null
+  onRecordingChange: (recording: RecordingIdentity, startNew: boolean) => void
+  feedbackEntries: FeedbackEntry[]
+  onFeedbackChange: (update: (entries: FeedbackEntry[]) => FeedbackEntry[]) => void
+}
+
+function VideoReview({ recording, onRecordingChange, feedbackEntries, onFeedbackChange }: VideoReviewProps) {
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [timestamp, setTimestamp] = useState<number | null>(null)
   const [duration, setDuration] = useState<number | null>(null)
   const [videoError, setVideoError] = useState("")
-  const [feedbackEntries, setFeedbackEntries] = useState<FeedbackEntry[]>([])
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
+  const [confirmNewReview, setConfirmNewReview] = useState(false)
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     const video = videoRef.current
@@ -34,11 +44,30 @@ function VideoReview() {
     setTimestamp(null)
   }
 
-  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
-    setVideoFile(event.target.files?.[0] ?? null)
+  function connectRecording(file: File, startNew = false) {
+    setVideoFile(file)
+    onRecordingChange(getRecordingIdentity(file), startNew)
     clearTimestamp()
     setDuration(null)
     setVideoError("")
+    setPendingFile(null)
+    setConfirmNewReview(false)
+    fileInputRef.current?.focus()
+  }
+
+  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0]
+    // Permit selecting the same file again after cancelling or a load failure.
+    event.currentTarget.value = ""
+    if (!file) return
+
+    if (recording && !matchesRecording(recording, getRecordingIdentity(file))) {
+      videoRef.current?.pause()
+      setPendingFile(file)
+      setConfirmNewReview(false)
+      return
+    }
+    connectRecording(file)
   }
 
   function handleLoadedMetadata(event: SyntheticEvent<HTMLVideoElement>) {
@@ -65,7 +94,7 @@ function VideoReview() {
 
   function handleStartFeedback() {
     const video = videoRef.current
-    if (!video || video.readyState < 1 || video.error || videoError || duration === null) return
+    if (!video || video.readyState < 1 || video.error || videoError || pendingFile || duration === null) return
 
     const seconds = Math.floor(video.currentTime)
     if (!Number.isFinite(seconds) || seconds < 0 || seconds > duration) return
@@ -75,29 +104,33 @@ function VideoReview() {
   }
 
   function handleAddFeedback(entry: FeedbackEntry): string | null {
+    if (pendingFile) return "Choose which recording to use before saving feedback."
     const error = validateFeedback(entry, duration)
     if (error) return error
 
-    setFeedbackEntries((previous) => [...previous, entry])
+    onFeedbackChange((previous) => [...previous, entry])
     setTimestamp(null)
     return null
   }
 
   function handleUpdateFeedback(updatedEntry: FeedbackEntry): string | null {
+    if (!videoFile || duration === null || videoError) return "Select a working recording before editing feedback."
+    if (pendingFile) return "Choose which recording to use before saving feedback."
     const error = validateFeedback(updatedEntry, duration)
     if (error) return error
     if (!feedbackEntries.some((entry) => entry.id === updatedEntry.id)) {
       return "This feedback entry is no longer available."
     }
 
-    setFeedbackEntries((previous) => previous.map((entry) =>
+    onFeedbackChange((previous) => previous.map((entry) =>
       entry.id === updatedEntry.id ? updatedEntry : entry
     ))
     return null
   }
 
   function handleDeleteFeedback(id: string) {
-    setFeedbackEntries((previous) => previous.filter((entry) => entry.id !== id))
+    if (!videoFile || duration === null || videoError || pendingFile) return
+    onFeedbackChange((previous) => previous.filter((entry) => entry.id !== id))
   }
 
   function handleSeek(seconds: number) {
@@ -105,6 +138,7 @@ function VideoReview() {
 
     if (
       !video ||
+      pendingFile ||
       video.error ||
       duration === null ||
       !Number.isFinite(seconds) ||
@@ -124,12 +158,38 @@ function VideoReview() {
       {!videoFile && <p>Select a recording to begin.</p>}
       <label htmlFor="video-upload">Select a local video</label>
       <input
+        ref={fileInputRef}
         id="video-upload"
         type="file"
         accept="video/*"
         aria-describedby="video-help"
         onChange={handleFileChange}
       />
+      {recording && <p className="form-hint">Review recording: {recording.name}</p>}
+      {pendingFile && (
+        <div className="removal-confirmation" role="group" aria-labelledby="recording-mismatch">
+          <p id="recording-mismatch" role="alert">
+            “{pendingFile.name}” does not match the review recording's filename, size, or last-modified time.
+            Matching metadata is a convenience check, not proof of identical contents.
+          </p>
+          {confirmNewReview ? (
+            <>
+              <p>Start a new review? This clears all saved context, feedback, and unsaved drafts in this review.</p>
+              <button type="button" onClick={() => connectRecording(pendingFile, true)}>Confirm new review</button>
+              <button type="button" onClick={() => setConfirmNewReview(false)}>Back</button>
+            </>
+          ) : (
+            <>
+              <button type="button" onClick={() => {
+                setPendingFile(null)
+                fileInputRef.current?.focus()
+              }}>Choose another file</button>
+              <button type="button" onClick={() => connectRecording(pendingFile)}>Use this recording anyway</button>
+              <button type="button" onClick={() => setConfirmNewReview(true)}>Start a new review</button>
+            </>
+          )}
+        </div>
+      )}
       {videoFile && (
         <>
           <video
@@ -144,7 +204,13 @@ function VideoReview() {
         </>
       )}
       {videoError && <Alert>{videoError}</Alert>}
-      {videoFile && <FeedbackList
+      {feedbackEntries.length > 0 && (!videoFile || duration === null || videoError || pendingFile) && (
+        <p className="form-hint">Feedback is read-only until a recording is connected and ready. Select the matching recording to edit, remove, or seek to notes.</p>
+      )}
+      {duration !== null && feedbackEntries.some((entry) => entry.timestamp > duration) && (
+        <Alert>Some feedback timestamps exceed this recording's duration. Those moments cannot be sought; edit their timestamps or choose the original recording. Notes have been preserved.</Alert>
+      )}
+      {(videoFile || feedbackEntries.length > 0) && <FeedbackList
         timestamp={timestamp}
         onStartFeedback={handleStartFeedback}
         onCancelFeedback={clearTimestamp}
@@ -153,7 +219,7 @@ function VideoReview() {
         duration={duration}
         onUpdate={handleUpdateFeedback}
         onDelete={handleDeleteFeedback}
-        canSeek={duration !== null && videoError === ""}
+        canSeek={duration !== null && videoError === "" && pendingFile === null}
         onSeek={handleSeek}
       />}
     </section>
