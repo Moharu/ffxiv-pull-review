@@ -64,6 +64,10 @@ Use a small number of behavioural tests for feedback changes, timestamp validati
 7. [Persist review data and recover safely](https://github.com/Moharu/ffxiv-pull-review/issues/7)
 8. [Verify accessibility, deploy and document the portfolio](https://github.com/Moharu/ffxiv-pull-review/issues/8)
 
-## Delivery checkpoint
+## MVP delivery checkpoint
 
 The app is available at https://ffxiv-pull-review.vercel.app/ with an opt-in hosted demo. Implementation verification includes 98 passing automated tests, lint/build, deployed Chromium flows and axe scans, plus developer-reported real-phone and 200%/400% zoom checks. Screen-reader verification was not performed. Small-screen functionality works, while a broader mobile UX redesign is deferred. See [the accessibility checkpoint](accessibility-check.md) for the precise verification scope and [the README](../README.md) for architecture and usage.
+
+## Post-MVP milestones
+
+The [milestone plan](milestones.md) tracks work after the original eight issues. Visual redesign is implementation-complete locally; Focused Mode is planned next, with viewport-filling video, overlay feedback controls, and indicators on the video progress bar. These additions extend the delivered MVP rather than reopening its original scope.

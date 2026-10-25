@@ -28,6 +28,17 @@ async function openDemo() {
 }
 
 describe('demo recording', () => {
+  it('starts silent and restores the demo audio guardrail after volume changes', async () => {
+    const { video } = await openDemo()
+    expect(video.muted).toBe(true)
+    expect(video.volume).toBe(0)
+    video.muted = false
+    video.volume = 0.8
+    fireEvent.volumeChange(video)
+    expect(video.muted).toBe(true)
+    expect(video.volume).toBe(0)
+  })
+
   it('loads only after opting in and needs no local file', async () => {
     const user = userEvent.setup()
     const { container } = render(<App />)

@@ -33,6 +33,13 @@ function FeedbackList({ onStartFeedback, onCancelFeedback, timestamp, onAddFeedb
 
   return (
     <>
+      <div className="feedback-heading">
+        <div>
+          <span className="section-kicker">Review notes</span>
+          <h2>Feedback</h2>
+        </div>
+        <span className="session-tag">{entries.length} notes</span>
+      </div>
       <div className="feedback-toolbar">
         <div>
       <label htmlFor={filterId}>Filter by category</label>
@@ -64,7 +71,7 @@ function FeedbackList({ onStartFeedback, onCancelFeedback, timestamp, onAddFeedb
       {entries.length === 0 && <p>No feedback yet. Choose Add Feedback at a moment you want to review.</p>}
       {entries.length > 0 && visibleEntries.length === 0 && <p>No feedback matches this category.</p>}
       {(timestamp !== null || entries.length > 0) && <div className="feedback-table-scroll" role="region" aria-label="Feedback table" aria-describedby={scrollHelpId} tabIndex={0}>
-        <p id={scrollHelpId} className="table-scroll-hint">Scroll sideways to see all columns on a small screen.</p>
+        <p id={scrollHelpId} className="table-scroll-hint">Feedback is ordered by timestamp. Select a timestamp to seek in the recording.</p>
         <table className="feedback-table">
           <caption className="visually-hidden">Feedback in timestamp order</caption>
           <thead>

@@ -116,7 +116,7 @@ function FeedbackItem({ entry, duration, onUpdate, onDelete, canSeek, canModify,
                 {feedbackCategories.map((category) => <option key={category} value={category}>{category}</option>)}
               </select>
             </>
-          ) : entry.category}
+          ) : <span className="category-badge">{entry.category}</span>}
         </td>
         <td>
           {isEditing ? (

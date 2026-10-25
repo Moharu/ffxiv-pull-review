@@ -12,6 +12,7 @@ type VideoReviewProps = {
   remoteSource?: string
   isSuspended?: boolean
   isSettingUp: boolean
+  hasReviewData: boolean
   onReadyChange: (ready: boolean) => void
   recording: RecordingIdentity | null
   onRecordingChange: (recording: RecordingIdentity, startNew: boolean) => void
@@ -19,7 +20,7 @@ type VideoReviewProps = {
   onFeedbackChange: (update: (entries: FeedbackEntry[]) => FeedbackEntry[]) => void
 }
 
-function VideoReview({ remoteSource, isSuspended = false, isSettingUp, onReadyChange, recording, onRecordingChange, feedbackEntries, onFeedbackChange }: VideoReviewProps) {
+function VideoReview({ remoteSource, isSuspended = false, isSettingUp, hasReviewData, onReadyChange, recording, onRecordingChange, feedbackEntries, onFeedbackChange }: VideoReviewProps) {
   const prefix = useId()
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [timestamp, setTimestamp] = useState<number | null>(null)
@@ -35,6 +36,10 @@ function VideoReview({ remoteSource, isSuspended = false, isSettingUp, onReadyCh
     const video = videoRef.current
     if ((!videoFile && !remoteSource) || !video) return
 
+    if (remoteSource) {
+      video.muted = true
+      video.volume = 0
+    }
     const url = remoteSource ?? URL.createObjectURL(videoFile!)
     video.src = url
 
@@ -72,7 +77,7 @@ function VideoReview({ remoteSource, isSuspended = false, isSettingUp, onReadyCh
     event.currentTarget.value = ""
     if (!file) return
 
-    if (recording && !matchesRecording(recording, getRecordingIdentity(file))) {
+    if (hasReviewData && recording && !matchesRecording(recording, getRecordingIdentity(file))) {
       videoRef.current?.pause()
       onReadyChange(false)
       setPendingFile(file)
@@ -168,96 +173,118 @@ function VideoReview({ remoteSource, isSuspended = false, isSettingUp, onReadyCh
 
   return (
     <section className="video-review" aria-labelledby={`${prefix}-video-review-heading`}>
-      <h2 id={`${prefix}-video-review-heading`}>{isSettingUp ? "Recording" : "Recording playback"}</h2>
-      {!remoteSource && <>
-      <p id={`${prefix}-video-help`} className="form-hint">
-        Your video stays on this device. Select it again after refreshing.
-      </p>
-      {!videoFile && <p>Select a recording to begin.</p>}
-      <label htmlFor={`${prefix}-video-upload`}>Select a local video</label>
-      <div className="file-picker">
-      <input
-        ref={fileInputRef}
-        id={`${prefix}-video-upload`}
-        type="file"
-        form={isSettingUp ? "recording-context-form" : undefined}
-        required={isSettingUp && !videoFile}
-        accept="video/*"
-        aria-describedby={`${prefix}-video-help ${prefix}-file-status`}
-        onChange={handleFileChange}
-      />
-      <span className="file-picker-action" aria-hidden="true">Choose file</span>
-      <span id={`${prefix}-file-status`} className="file-picker-name">
-        {videoFile ? `Selected: ${videoFile.name}` : "No video connected"}
-      </span>
-      </div>
-      {recording && !videoFile && <p className="form-hint">Saved review recording: {recording.name}. Select it again to reconnect.</p>}
-      </>}
-      {pendingFile && (
-        <div className="removal-confirmation" role="group" aria-labelledby={`${prefix}-recording-mismatch`}>
-          <p id={`${prefix}-recording-mismatch`} role="alert">
-            “{pendingFile.name}” does not match the review recording's filename, size, or last-modified time.
-            Matching metadata is a convenience check, not proof of identical contents.
-          </p>
-          {confirmNewReview ? (
-            <>
-              <p>Start a new review? This clears all saved context, feedback, and unsaved drafts in this review.</p>
-              <button type="button" onClick={() => connectRecording(pendingFile, true)}>Confirm new review</button>
-              <button type="button" onClick={() => setConfirmNewReview(false)}>Back</button>
-            </>
-          ) : (
-            <>
-              <button type="button" onClick={() => {
-                onReadyChange(duration !== null && !videoError)
-                setPendingFile(null)
-                fileInputRef.current?.focus()
-              }}>Cancel replacement</button>
-              <button type="button" onClick={() => connectRecording(pendingFile)}>Use this recording anyway</button>
-              <button type="button" onClick={() => setConfirmNewReview(true)}>Start a new review</button>
-            </>
-          )}
+      <div className="playback-pane">
+        <div className="playback-title flex items-center justify-between gap-3">
+        <h2 id={`${prefix}-video-review-heading`}>{isSettingUp ? "Recording" : "Recording playback"}</h2>
+        <span className="session-tag">{remoteSource ? "Demo recording · Audio off" : "Local recording"}</span>
         </div>
-      )}
-      {(videoFile || remoteSource) && (
-        <>
-          <video
-            ref={videoRef}
-            controls
-            preload="metadata"
-            onLoadedMetadata={handleLoadedMetadata}
-            onError={handleVideoError}
-          />
-          {duration !== null && (
-            <p>Recording duration: {formatTimestamp(duration)}</p>
-          )}
-        </>
-      )}
-      {videoError && <Alert>{videoError}</Alert>}
-      {remoteSource && videoError && <button type="button" onClick={() => {
-        setVideoError("")
-        setDuration(null)
-        setRetryVersion((previous) => previous + 1)
-      }}>Retry demo video</button>}
-      {feedbackEntries.length > 0 && ((!videoFile && !remoteSource) || duration === null || videoError || pendingFile) && (
-        <p className="form-hint">{remoteSource
-          ? "Demo feedback is read-only until the recording is ready."
-          : "Feedback is read-only until a recording is connected and ready. Select the matching recording to edit, remove, or seek to notes."}</p>
-      )}
-      {duration !== null && feedbackEntries.some((entry) => entry.timestamp > duration) && (
-        <Alert>Some feedback timestamps exceed this recording's duration. Those moments cannot be sought; edit their timestamps or choose the original recording. Notes have been preserved.</Alert>
-      )}
-      {!isSettingUp && (videoFile || remoteSource || feedbackEntries.length > 0) && <FeedbackList
-        timestamp={timestamp}
-        onStartFeedback={handleStartFeedback}
-        onCancelFeedback={clearTimestamp}
-        onAddFeedback={handleAddFeedback}
-        entries={feedbackEntries}
-        duration={duration}
-        onUpdate={handleUpdateFeedback}
-        onDelete={handleDeleteFeedback}
-        canSeek={duration !== null && videoError === "" && pendingFile === null}
-        onSeek={handleSeek}
-      />}
+        {!remoteSource && <div className="recording-source">
+        <p id={`${prefix}-video-help`} className="form-hint">
+          Your video stays on this device. Select it again after refreshing.
+        </p>
+
+        <label htmlFor={`${prefix}-video-upload`}>Select a local video</label>
+        <div className="file-picker">
+        <input
+          ref={fileInputRef}
+          id={`${prefix}-video-upload`}
+          type="file"
+          form={isSettingUp ? "recording-context-form" : undefined}
+          required={isSettingUp && !videoFile}
+          accept="video/*"
+          aria-describedby={`${prefix}-video-help ${prefix}-file-status`}
+          onChange={handleFileChange}
+        />
+        <span className="file-picker-action" aria-hidden="true">Choose file</span>
+        <span id={`${prefix}-file-status`} className="file-picker-name">
+          {videoFile ? `Selected: ${videoFile.name}` : "No video connected"}
+        </span>
+        </div>
+        {recording && !videoFile && <p className="form-hint">Saved review recording: {recording.name}. Select it again to reconnect.</p>}
+        </div>}
+        {!videoFile && !remoteSource && <div className="video-placeholder">
+          <span aria-hidden="true" className="placeholder-symbol">▷</span>
+          <p>Your next pull starts here.</p>
+          <span>Select a local recording to begin your review.</span>
+        </div>}
+        {(videoFile || remoteSource) && (
+          <>
+            <video
+              ref={videoRef}
+              controls
+              muted={Boolean(remoteSource)}
+              data-demo-muted={remoteSource ? "true" : undefined}
+              onVolumeChange={(event) => {
+                if (!remoteSource) return
+                // Native controls cannot disable volume alone across browsers.
+                const video = event.currentTarget
+                if (!video.muted) video.muted = true
+                if (video.volume !== 0) video.volume = 0
+              }}
+              preload="metadata"
+              onLoadedMetadata={handleLoadedMetadata}
+              onError={handleVideoError}
+            />
+            {duration !== null && (
+              <p className="playback-duration">Recording duration: {formatTimestamp(duration)}</p>
+            )}
+          </>
+        )}
+      </div>
+      <div className="feedback-pane" tabIndex={0} role="region" aria-label="Feedback workspace">
+        {pendingFile && (
+          <div className="removal-confirmation" role="group" aria-labelledby={`${prefix}-recording-mismatch`}>
+            <p id={`${prefix}-recording-mismatch`} role="alert">
+              “{pendingFile.name}” does not match the review recording's filename, size, or last-modified time.
+              Matching metadata is a convenience check, not proof of identical contents.
+            </p>
+            {confirmNewReview ? (
+              <>
+                <p>Start a new review? This clears all saved context, feedback, and unsaved drafts in this review.</p>
+                <button type="button" onClick={() => connectRecording(pendingFile, true)}>Confirm new review</button>
+                <button type="button" onClick={() => setConfirmNewReview(false)}>Back</button>
+              </>
+            ) : (
+              <>
+                <button type="button" onClick={() => {
+                  onReadyChange(duration !== null && !videoError)
+                  setPendingFile(null)
+                  fileInputRef.current?.focus()
+                }}>Cancel replacement</button>
+                <button type="button" onClick={() => connectRecording(pendingFile)}>Use this recording anyway</button>
+                <button type="button" onClick={() => setConfirmNewReview(true)}>Start a new review</button>
+              </>
+            )}
+          </div>
+        )}
+        {videoError && <Alert>{videoError}</Alert>}
+        {remoteSource && videoError && <button type="button" onClick={() => {
+          setVideoError("")
+          setDuration(null)
+          setRetryVersion((previous) => previous + 1)
+        }}>Retry demo video</button>}
+        {feedbackEntries.length > 0 && ((!videoFile && !remoteSource) || duration === null || videoError || pendingFile) && (
+          <p className="form-hint">{remoteSource
+            ? "Demo feedback is read-only until the recording is ready."
+            : "Feedback is read-only until a recording is connected and ready. Select the matching recording to edit, remove, or seek to notes."}</p>
+        )}
+        {duration !== null && feedbackEntries.some((entry) => entry.timestamp > duration) && (
+          <Alert>Some feedback timestamps exceed this recording's duration. Those moments cannot be sought; edit their timestamps or choose the original recording. Notes have been preserved.</Alert>
+        )}
+        {!isSettingUp && (videoFile || remoteSource || feedbackEntries.length > 0) && <FeedbackList
+          timestamp={timestamp}
+          onStartFeedback={handleStartFeedback}
+          onCancelFeedback={clearTimestamp}
+          onAddFeedback={handleAddFeedback}
+          entries={feedbackEntries}
+          duration={duration}
+          onUpdate={handleUpdateFeedback}
+          onDelete={handleDeleteFeedback}
+          canSeek={duration !== null && videoError === "" && pendingFile === null}
+          onSeek={handleSeek}
+        />}
+        {isSettingUp && <div className="setup-empty"><span className="section-kicker">Feedback</span><p>Set the scene. Then find the moments that matter.</p><span>Your timestamped notes will appear here once you start a review.</span></div>}
+      </div>
     </section>
   )
 }

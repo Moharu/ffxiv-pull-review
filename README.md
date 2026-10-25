@@ -36,7 +36,7 @@ The current saved format is version 2. Version-1 reviews migrate automatically: 
 
 ## Demo recording
 
-Choose **Try demo recording** to explore the hosted M9S video without a local file. It loads only after opting in, with metadata preloading and no autoplay. The demo features Moharu Nn (Sage) in Vamp Fatale - M9S, with two feedback notes supplied by the recording’s owner at 1:07 and 5:06. Demo changes are temporary and never written over your saved review. **Reset demo** restores the starter notes; **Return to my review** restores your local session, including its selected video and unfinished inputs.
+Choose **Try demo recording** to explore the hosted M9S video without a local file. It loads only after opting in, with metadata preloading and no autoplay. Demo audio is muted and volume changes are reset to zero; local recordings retain their normal audio controls. Native demo volume controls are hidden where the browser supports it. The demo features Moharu Nn (Sage) in Vamp Fatale - M9S, with two feedback notes supplied by the recording’s owner at 1:07 and 5:06. Demo changes are temporary and never written over your saved review. **Reset demo** restores the starter notes; **Return to my review** restores your local session, including its selected video and unfinished inputs.
 
 The public source URL and starter notes live in `src/demo.ts`. The video is hosted on Vercel Blob; no Blob token or upload SDK is needed in the frontend. If hosting fails, retry or return to local review. The demo depends on the availability of its public host.
 
@@ -44,7 +44,7 @@ The public source URL and starter notes live in `src/demo.ts`. The video is host
 
 Data belongs to this browser and site address; localhost and production have separate storage. Clearing site data removes the saved review. Storage failures show a message while preserving the in-memory session. Invalid or unsupported saved data is left untouched until you confirm replacing it with the current working review. Video bytes and temporary playback URLs are never stored. Metadata matching is a convenience check, not proof that two files have identical contents.
 
-The feedback table scrolls horizontally on small screens. Real-phone functionality was checked, but a more comfortable mobile editing layout is deferred. There is no review library, export/import, or sharing yet.
+The current dark workspace uses Tailwind CSS. On tablet and desktop windows at least 768px wide and 600px tall, a compact context header sits above a video/notes split (roughly 70/30 on wide screens and 60/40 on tablets). Feedback scrolls independently while the whole video stays visible. Narrower workspaces present feedback as cards; short windows fall back to normal page flow so controls remain reachable. The redesigned layout has browser-emulation checks; the earlier real-phone results apply to the original MVP styling. There is no review library, export/import, or sharing yet.
 
 ## Development
 
@@ -71,22 +71,28 @@ Tests use Vitest, React Testing Library, user-event, and jsdom. Run `npm run tes
 
 `App` owns the persisted review and coordinates setup, readiness, and the isolated demo. `VideoReview` owns the selected file, media element reference, playback readiness, and recording-replacement flow. `FeedbackList`, `FeedbackItem`, and `FeedbackForm` handle filtering and table interactions. Shared types and utility functions centralize categories, importance, timestamp handling, validation, recording identity, and storage.
 
-Controlled inputs keep drafts separate from saved data. Functional state updates preserve unrelated fields. Refs access the native video element; effects synchronize localStorage and clean up temporary object URLs. Filtered/sorted entries are derived during rendering. Native HTML and plain CSS keep the dependency footprint small.
+Controlled inputs keep drafts separate from saved data. Functional state updates preserve unrelated fields. Refs access the native video element; effects synchronize localStorage and clean up temporary object URLs. Filtered/sorted entries are derived during rendering. Native HTML supplies controls and semantics. Tailwind CSS 4 is integrated through its Vite plugin; shared component styles use `@apply`, with CSS media queries for the bounded playback workspace.
 
 ## Verification
 
-The latest implementation checkpoint passed 98 tests, lint, and the production build. Tests cover timestamp and feedback validation, edits/deletion, persistence migration/recovery, recording matching, and demo isolation. jsdom media stubs test event handling; real playback was checked separately in Chromium against the deployed demo.
+The latest post-MVP implementation checkpoint passed 102 tests, lint, and the production build. Tests cover timestamp and feedback validation, edits/deletion, persistence migration/recovery, recording matching, and demo isolation. jsdom media stubs test event handling; real playback was checked separately in Chromium against the deployed demo.
 
-Deployed setup/demo/edit states passed axe scans at 375, 768, and 1440 pixels. The developer reported successful real-phone use and browser zoom checks at 200% and 400%, with visible keyboard focus and no clipping or page-wide horizontal scrolling. Screen-reader testing was not performed. These checks cover selected flows and do not establish complete accessibility conformance. See the [verification report](docs/accessibility-check.md) for evidence and limits.
+For the original MVP, deployed setup/demo/edit states passed axe scans at 375, 768, and 1440 pixels. The developer reported successful real-phone use and browser zoom checks at 200% and 400%, with visible keyboard focus and no clipping or page-wide horizontal scrolling. Screen-reader testing was not performed. These checks cover selected flows and do not establish complete accessibility conformance. See the [verification report](docs/accessibility-check.md) for evidence and limits.
 
 ## Project process
 
 The [project brief](docs/project-brief.md) records scope and the issue sequence. The [development journal](docs/development-journal.md) follows the implementation and learning behind those issues, documenting how developer decisions and AI assistance shaped the result.
 
+## Post-MVP milestones
+
+The **visual redesign** is complete locally: a dark Tailwind workspace with a compact context header and side-by-side video/feedback. Local checks are complete; post-push CI and deployed verification remain to be confirmed.
+
+Next is **Focused Mode**: viewport-filling video, overlay feedback controls, and feedback indicators on the progress bar. It is planned, not implemented. See [milestones and scope](docs/milestones.md) for details and open decisions.
+
 ## Working agreement
 
 - Implement one issue at a time; explain the React concepts introduced.
-- Prefer native HTML, plain CSS, and built-in React features before dependencies.
+- Prefer native HTML and built-in React features; use Tailwind CSS for the visual system.
 - Keep supplied footage out of Git. Video selection is local; no upload is involved.
 - Each issue should leave a small, reviewable result and a short manual verification path.
 - At each issue completion, suggest a brief development-journal update covering decisions, developer input, learning, and verification.

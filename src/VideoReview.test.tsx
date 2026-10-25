@@ -52,6 +52,42 @@ function savedRows() {
 }
 
 describe('VideoReview feedback mutations', () => {
+  it('switches recordings freely before saving review data, including after refresh', async () => {
+    const user = userEvent.setup()
+    const firstRender = render(<App />)
+    await user.upload(screen.getByLabelText('Select a local video'),
+      new File(['first'], 'first.mp4', { type: 'video/mp4' }))
+    await user.type(screen.getByRole('textbox', { name: /Encounter/ }), 'Unsaved encounter')
+    await user.upload(screen.getByLabelText('Select a local video'),
+      new File(['second'], 'second.mp4', { type: 'video/mp4' }))
+    expect(screen.queryByRole('group', { name: /does not match/ })).not.toBeInTheDocument()
+    expect(screen.getByText('Selected: second.mp4')).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: /Encounter/ })).toHaveValue('Unsaved encounter')
+    firstRender.unmount()
+    render(<App />)
+    await user.upload(screen.getByLabelText('Select a local video'),
+      new File(['third'], 'third.mp4', { type: 'video/mp4' }))
+    expect(screen.queryByRole('group', { name: /does not match/ })).not.toBeInTheDocument()
+    expect(screen.getByText('Selected: third.mp4')).toBeInTheDocument()
+  })
+
+  it('protects saved context even when no feedback has been added', async () => {
+    const { user } = await setupRecording()
+    await user.upload(screen.getByLabelText('Select a local video'),
+      new File(['replacement'], 'replacement.mp4', { type: 'video/mp4' }))
+    expect(screen.getByRole('group', { name: /does not match/ })).toBeInTheDocument()
+    expect(screen.queryByText('Selected: replacement.mp4')).not.toBeInTheDocument()
+  })
+
+  it('leaves volume controls available for local recordings', async () => {
+    const { video } = await setupRecording()
+    expect(video.muted).toBe(false)
+    video.volume = 0.5
+    fireEvent.volumeChange(video)
+    expect(video.volume).toBe(0.5)
+    expect(video.muted).toBe(false)
+  })
+
   it('keeps local and demo draft labels and form ownership separate', async () => {
     const { user } = await setupRecording()
     await user.click(screen.getByRole('button', { name: 'Add Feedback' }))

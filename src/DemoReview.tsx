@@ -10,6 +10,7 @@ function DemoSession() {
   return (
     <VideoReview
       remoteSource={demoVideoUrl}
+      hasReviewData={false}
       recording={null}
       onRecordingChange={ignoreRecordingChange}
       feedbackEntries={entries}
@@ -28,37 +29,40 @@ function DemoReview({ onExit }: { onExit: () => void }) {
 
   return (
     <section className="review-panel" aria-label="Demo review">
-      <header className="review-header">
-        <div>
-          <h2 tabIndex={-1} ref={focusHeading}>{demoContext.encounter} · Demo recording</h2>
-          <p>{demoContext.playerName} · {demoContext.playerJob}</p>
-          <p className="review-pull-notes">{demoContext.pullNotes}</p>
-          <p className="form-hint">Sample feedback supplied by the recording's owner. Demo edits are temporary; your own review stays saved separately.</p>
-        </div>
-        <div className="feedback-row-actions">
-          <button type="button" ref={(button) => {
-            if (button && restoreResetFocus.current) {
-              button.focus()
-              restoreResetFocus.current = false
-            }
-          }} onClick={() => setConfirmReset(true)}>Reset demo</button>
-          <button type="button" onClick={onExit}>Return to my review</button>
-        </div>
-      </header>
-      {confirmReset && (
-        <div className="removal-confirmation" role="group" aria-label="Reset demo confirmation">
-          <p>Discard demo changes and restore the example notes?</p>
-          <button type="button" onClick={() => {
-            restoreResetFocus.current = true
-            setGeneration((previous) => previous + 1)
-            setConfirmReset(false)
-          }}>Confirm reset</button>
-          <button autoFocus type="button" onClick={() => {
-            restoreResetFocus.current = true
-            setConfirmReset(false)
-          }}>Cancel reset</button>
-        </div>
-      )}
+      <div className="context-panel">
+        <div className="section-kicker">Recording context</div>
+        <header className="review-header">
+          <div>
+            <h2 tabIndex={-1} ref={focusHeading}>{demoContext.encounter} · Demo recording</h2>
+            <p>{demoContext.playerName} · {demoContext.playerJob}</p>
+            <p className="review-pull-notes">{demoContext.pullNotes}</p>
+            <p className="form-hint">Sample feedback supplied by the recording's owner. Demo edits are temporary; your own review stays saved separately.</p>
+          </div>
+          <div className="feedback-row-actions">
+            <button type="button" ref={(button) => {
+              if (button && restoreResetFocus.current) {
+                button.focus()
+                restoreResetFocus.current = false
+              }
+            }} onClick={() => setConfirmReset(true)}>Reset demo</button>
+            <button type="button" onClick={onExit}>Return to my review</button>
+          </div>
+        </header>
+        {confirmReset && (
+          <div className="removal-confirmation" role="group" aria-label="Reset demo confirmation">
+            <p>Discard demo changes and restore the example notes?</p>
+            <button type="button" onClick={() => {
+              restoreResetFocus.current = true
+              setGeneration((previous) => previous + 1)
+              setConfirmReset(false)
+            }}>Confirm reset</button>
+            <button autoFocus type="button" onClick={() => {
+              restoreResetFocus.current = true
+              setConfirmReset(false)
+            }}>Cancel reset</button>
+          </div>
+        )}
+      </div>
       <DemoSession key={generation} />
     </section>
   )

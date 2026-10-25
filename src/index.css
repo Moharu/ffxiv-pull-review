@@ -1,491 +1,203 @@
-:root {
-  font-family: system-ui, sans-serif;
-  color: #202b3c;
-  background: #f4f6fa;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  line-height: 1.6;
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "Segoe UI", system-ui, sans-serif;
+  --color-workspace: #101014;
+  --color-panel: #17171d;
+  --color-accent: #b6a0ff;
 }
 
-* {
-  box-sizing: border-box;
+@layer base {
+  :root { color-scheme: dark; font-family: var(--font-sans); background: #101014; color: #e9e9ef; font-synthesis: none; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; }
+  button, input, select, textarea { font: inherit; }
+  button { cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+  h2 { font-size: 1.15rem; font-weight: 600; letter-spacing: -.025em; }
+  :focus-visible { outline: 2px solid #c5b4ff; outline-offset: 4px; }
+  ::selection { background: #7350b9; color: white; }
 }
 
-[hidden] { display: none !important; }
-
-body {
-  margin: 0;
-}
-
-main {
-  width: min(100% - 2rem, 90rem);
-  margin: clamp(2rem, 6vw, 4.5rem) auto;
-}
-
-h1 {
-  max-width: 20ch;
-  margin: 0.75rem 0 1rem;
-  font-size: clamp(2rem, 6vw, 3.5rem);
-  line-height: 1.15;
-  letter-spacing: -0.035em;
-}
-
-h2 {
-  margin: 0 0 0.5rem;
-  font-size: 1.4rem;
-  line-height: 1.3;
-}
-
-main > p:not(.eyebrow) {
-  color: #526078;
-  max-width: 58ch;
-}
-
-.eyebrow {
-  margin: 0;
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #40578a;
-}
-
-.review-panel {
-  margin-top: 2rem;
-  padding: clamp(1.25rem, 4vw, 2.25rem);
-  background: white;
-  border: 1px solid #d5dce8;
-  border-radius: 1rem;
-  box-shadow: 0 8px 32px #202b3c08;
-}
-
-.context-card,
-.video-review {
-  min-width: 0;
-}
-
-.video-review {
-  margin-top: 1.5rem;
-}
-
-.review-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: start;
-  flex-wrap: wrap;
-  gap: 1rem;
-  padding-bottom: 1.25rem;
-  border-bottom: 1px solid #d5dce8;
-}
-
-.review-header > div { min-width: 0; }
-.review-header h2,
-.review-header p { overflow-wrap: anywhere; }
-.review-header p { margin: 0.35rem 0; }
-.review-pull-notes { white-space: pre-wrap; overflow-wrap: anywhere; }
-.setup-actions { margin-top: 1.5rem; }
-.setup-actions button { margin: 0.75rem 0.75rem 0 0; }
-
-.demo-entry {
-  margin-top: 1.5rem;
-}
-
-.demo-entry button {
-  padding: 0.75rem 1.25rem;
-  margin-bottom: 0.5rem;
-  min-height: 2.75rem;
-  border: 1px solid #2848a0;
-  border-radius: 0.5rem;
-  background: #fff;
-  color: #2848a0;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.demo-entry button:hover { background: #eaf0fc; }
-
-.video-review label {
-  display: block;
-  margin: 1rem 0 0.5rem;
-  font-weight: 600;
-}
-
-.video-review input[type="file"] {
-  display: block;
-  width: 100%;
-  min-width: 0;
-  font: inherit;
-}
-
-.video-review video {
-  display: block;
-  width: 100%;
-  height: auto;
-  max-height: 70vh;
-  margin-top: 1.25rem;
-  background: #101827;
-  border-radius: 0.5rem;
-  object-fit: contain;
-}
-
-.context-card form {
-  display: grid;
-  gap: 1.25rem;
-}
-
-.form-hint {
-  margin: 0 0 0.25rem;
-  color: #526078;
-  font-size: 0.9rem;
-}
-
-.context-card label {
-  display: block;
-  margin-bottom: 0.4rem;
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-
-.context-card input,
-.feedback-editor input,
-.feedback-editor select,
-.feedback-editor textarea,
-.context-card select,
-.context-card textarea {
-  display: block;
-  width: 100%;
-  min-width: 0;
-  padding: 0.75rem 0.875rem;
-  border: 1px solid #8592a8;
-  border-radius: 0.5rem;
-  background: #fff;
-  color: inherit;
-  font: inherit;
-}
-
-.feedback-table-scroll {
-  overflow-x: auto;
-  margin-top: 1rem;
-  border: 1px solid #d5dce8;
-  border-radius: 0.5rem;
-}
-
-.feedback-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: end;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.feedback-toolbar select {
-  max-width: 100%;
-  min-height: 2.75rem;
-  padding: 0.5rem;
-  border: 1px solid #8592a8;
-  border-radius: 0.5rem;
-  background: #fff;
-  color: inherit;
-  font: inherit;
-}
-
-.feedback-table {
-  width: 100%;
-  min-width: 0;
-  table-layout: fixed;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-}
-
-.feedback-table th,
-.feedback-table td {
-  padding: 0.75rem;
-  text-align: left;
-  vertical-align: top;
-  border-bottom: 1px solid #d5dce8;
-  overflow-wrap: anywhere;
-  white-space: pre-wrap;
-}
-
-.feedback-table th {
-  background: #f4f6fa;
-  overflow-wrap: normal;
-  white-space: normal;
-}
-
-.feedback-table th:nth-child(1) { width: 6.5rem; }
-.feedback-table th:nth-child(2) { width: 8rem; }
-.feedback-table th:nth-child(3) { width: 8rem; }
-.feedback-table th:nth-child(6) { width: 8rem; }
-
-.importance-badge {
-  display: inline-block;
-  padding: 0.2rem 0.55rem;
-  border: 1px solid;
-  border-radius: 1rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.importance-1 { background: #dcfce7; color: #14532d; border-color: #86b99a; }
-.importance-2 { background: #ecfccb; color: #365314; border-color: #a3bc78; }
-.importance-3 { background: #fef9c3; color: #713f12; border-color: #c9b461; }
-.importance-4 { background: #ffedd5; color: #7c2d12; border-color: #d5a57f; }
-.importance-5 { background: #fee2e2; color: #7f1d1d; border-color: #d59a9a; }
-
-.feedback-row-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.video-review .feedback-table button {
-  margin: 0;
-  width: auto;
-  padding: 0.5rem 0.65rem;
-  white-space: nowrap;
-}
-
-.video-review .feedback-table .feedback-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  padding: 0.5rem;
-  border: 0;
-  background: transparent;
-  color: #2848a0;
-}
-
-.feedback-icon svg {
-  width: 1.75rem;
-  height: 1.75rem;
-}
-
-.video-review .feedback-table .feedback-icon-remove {
-  color: #8d2630;
-}
-
-.video-review .feedback-table .feedback-icon:hover {
-  background: #eaf0fc;
-}
-
-.video-review .feedback-table .feedback-icon-remove:hover {
-  background: #fff0f0;
-}
-
-.video-review .feedback-table .feedback-icon:disabled {
-  color: #697589;
-  background: transparent;
-  opacity: 0.55;
-}
-
-.feedback-table .feedback-editor {
-  background: #f4f7ff;
-}
-
-.feedback-new-row td {
-  border-bottom: 2px solid #bac9ea;
-}
-
-.feedback-new-row small {
-  color: #40578a;
-  margin: 0 0 0.25rem;
-  font-weight: 600;
-}
-
-.feedback-table input,
-.feedback-table select,
-.feedback-table textarea {
-  padding: 0.5rem;
-}
-
-.feedback-table small {
-  display: block;
-  margin-top: 0.25rem;
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-}
-
-.table-scroll-hint {
-  display: none;
-  margin: 0;
-  padding: 0.75rem;
-  color: #526078;
-  font-size: 0.875rem;
-}
-
-.removal-confirmation {
-  margin-top: 1rem;
-  padding: 1rem;
-  border: 1px solid #dfadb2;
-  border-radius: 0.5rem;
-  background: #fff3f3;
-}
-
-.removal-confirmation p {
-  margin: 0;
-}
-
-.feedback-editor textarea {
-  min-height: 6rem;
-  resize: vertical;
-}
-
-.context-card input::placeholder,
-.context-card textarea::placeholder {
-  color: #647187;
-  opacity: 1;
-}
-
-.context-card textarea {
-  min-height: 8rem;
-  resize: vertical;
-}
-
-/* Shared controls also cover demo confirmations and storage recovery. */
-button,
-.file-picker-action {
-  min-height: 2.75rem;
-  padding: 0.65rem 1rem;
-  border: 1px solid #2848a0;
-  border-radius: 0.5rem;
-  background: #2848a0;
-  color: #fff;
-  font: inherit;
-  font-weight: 600;
-  line-height: 1.4;
-  cursor: pointer;
-}
-
-button:hover,
-.file-picker:hover .file-picker-action { background: #1d367b; }
-button:active,
-.file-picker:active .file-picker-action { background: #15295e; }
-button:disabled {
-  background: #e2e7ef;
-  border-color: #8592a8;
-  color: #526078;
-  cursor: not-allowed;
-}
-
-.video-review button { margin-top: 1rem; }
-.removal-confirmation button { margin: 0.75rem 0.5rem 0 0; }
-
-.file-picker {
-  position: relative;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  border: 1px solid #8592a8;
-  border-radius: 0.5rem;
-  background: #fff;
-}
-
-.video-review .file-picker input[type="file"] {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.file-picker-name { min-width: 0; overflow-wrap: anywhere; }
-.file-picker:has(input:focus-visible) {
-  outline: 3px solid #315bd1;
-  outline-offset: 3px;
-}
-
-:focus-visible {
-  outline: 3px solid #315bd1;
-  outline-offset: 3px;
-}
-
-.alert,
-.context-card [role="status"] {
-  margin: 0;
-  padding: 0.875rem 1rem;
-  border: 1px solid;
-  border-radius: 0.5rem;
-  overflow-wrap: anywhere;
-}
-
-.alert {
-  color: #8d2630;
-  background: #fff3f3;
-  border-color: #dfadb2;
-}
-
-.video-review > .alert {
-  margin-top: 1rem;
-}
-
-.timestamp-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 0.75rem;
-}
-
-.video-review .remove-timestamp {
-  color: #8d2630;
-  background: #fff;
-  border-color: #8d2630;
-}
-
-.video-review .remove-timestamp:hover {
-  background: #fff3f3;
-}
-
-.context-card [role="status"] {
-  margin-top: 1.25rem;
-  color: #215740;
-  background: #eef8f2;
-  border-color: #a6ceb7;
-}
-
-@media (max-width: 480px) {
-  .context-card button,
-  .video-review button {
-    width: 100%;
+@layer components {
+  .app-shell { background: radial-gradient(ellipse at top left, #30224225, transparent 50%), #101014; }
+  .app-header { background: #131318; }
+  .eyebrow { @apply text-sm font-semibold tracking-tight; }
+  .brand-mark { font-size: 1.8rem; }
+  .session-tag { @apply inline-flex items-center rounded-md border border-white/10 px-2 py-1 text-[10px] font-medium tracking-wide text-zinc-400; }
+  .review-panel { @apply m-3 min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-panel shadow-xl; }
+  .context-panel { @apply min-w-0 border-b border-white/10 p-5; background: linear-gradient(150deg, #1d1c26, #17171d 60%); }
+  .section-kicker { @apply text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-400; }
+  .section-kicker > span { @apply mr-2 text-violet-300; }
+  .context-card h2 { @apply mb-1 mt-6 text-xl; }
+  .context-card form { @apply grid gap-4; }
+  .form-hint { @apply text-xs leading-relaxed text-zinc-400; }
+  .context-card label { @apply mb-2 block text-xs font-medium text-zinc-300; }
+  .context-card input, .context-card select, .context-card textarea,
+  .feedback-editor input, .feedback-editor select, .feedback-editor textarea, .feedback-toolbar select {
+    @apply block min-w-0 w-full rounded-lg border border-white/15 bg-[#111116] px-3 py-2.5 text-sm text-zinc-100;
   }
+  input::placeholder, textarea::placeholder { color: #777783; }
+  input:hover, select:hover, textarea:hover { border-color: #666071; }
+  .context-card textarea { @apply min-h-24 resize-y; }
+  button, .file-picker-action {
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-white/15 bg-[#26252f] px-3 py-2 text-xs font-semibold text-zinc-200 transition-colors;
+  }
+  button:hover { @apply border-violet-400/40 bg-[#35313f] text-white; }
+  button:active { background: #42374e; }
+  button:disabled { @apply border-white/5 bg-white/5 text-zinc-500; }
+  button[type="submit"], .feedback-toolbar > button, .setup-actions button:first-of-type {
+    @apply border-violet-300/30 bg-violet-300 text-[#211734] shadow-sm;
+  }
+  button[type="submit"]:hover, .feedback-toolbar > button:hover, .setup-actions button:first-of-type:hover { background: #cbbaff; }
+  button:disabled, button[type="submit"]:disabled { @apply border-white/5 bg-white/5 text-zinc-500 shadow-none; }
+  .demo-entry button { @apply border-violet-400/25 bg-violet-400/10 text-violet-200; }
+  .review-header { @apply mt-6 flex min-w-0 flex-col gap-4; }
+  .review-header h2 { @apply text-2xl leading-tight; overflow-wrap: anywhere; }
+  .review-header p { @apply mt-3 text-sm text-zinc-300; overflow-wrap: anywhere; }
+  .review-header .form-hint { @apply text-xs text-zinc-400; }
+  .review-pull-notes { @apply border-l-2 border-violet-400/40 pl-3; white-space: pre-wrap; }
+  .review-header > button { align-self: start; }
+  .setup-actions { @apply mt-5 flex flex-wrap justify-end gap-2; }
+  .setup-actions p { @apply w-full; }
+  .video-review { @apply min-h-0 min-w-0; }
+  .playback-pane { @apply min-w-0 border-b border-white/10 bg-[#111115] p-4; }
+  .playback-title { @apply mb-3; }
+  .playback-title h2 { @apply text-xs font-medium tracking-wide text-zinc-300; }
+  .video-review video { @apply block w-full rounded-lg bg-black; aspect-ratio: 16/9; object-fit: contain; max-height: 44dvh; }
+  .playback-duration { @apply mt-2 text-[10px] tabular-nums text-zinc-400; }
+  .recording-source { @apply mb-3 grid min-w-0 gap-2; }
+  .recording-source label { @apply text-xs font-medium text-zinc-300; }
+  .recording-source .form-hint { @apply text-[10px]; }
+  .file-picker { @apply relative flex min-w-0 flex-wrap items-center gap-2 rounded-lg border border-dashed border-white/20 bg-white/[0.02] p-2; }
+  .file-picker input[type="file"] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+  .file-picker-action { @apply min-h-8 px-3 py-1 text-xs; }
+  .file-picker-name { @apply min-w-0 text-xs text-zinc-400; overflow-wrap: anywhere; }
+  .file-picker:has(input:focus-visible) { outline: 2px solid #c5b4ff; outline-offset: 3px; }
+  .video-placeholder { @apply grid min-h-48 content-center justify-items-center rounded-xl border border-dashed border-white/15 px-4 py-8 text-center; background: radial-gradient(ellipse at center, #6c4fa31c, transparent 70%); }
+  .placeholder-symbol { @apply mb-3 grid size-14 place-items-center rounded-2xl border border-violet-300/20 bg-violet-300/5 text-3xl text-violet-300; }
+  .video-placeholder p { @apply text-sm font-medium; }
+  .video-placeholder > span:last-child { @apply mt-2 text-xs text-zinc-400; }
+  .feedback-pane { @apply min-h-0 min-w-0 p-4; }
+  .feedback-heading { @apply mb-4 flex items-center justify-between gap-2; }
+  .feedback-heading h2 { @apply mt-1 text-lg; }
+  .feedback-toolbar { @apply mb-4 flex flex-wrap items-end justify-between gap-3; }
+  .feedback-toolbar label { @apply mb-1.5 block text-[11px] text-zinc-400; }
+  .feedback-toolbar select { @apply min-h-10 w-auto py-2 text-xs; }
+  .feedback-pane > p { @apply my-3 text-xs text-zinc-400; }
+  .feedback-table-scroll { @apply relative min-w-0 overflow-x-auto rounded-xl border border-white/10; }
+  .feedback-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: .75rem; }
+  .feedback-table th, .feedback-table td { @apply border-b border-white/10 p-3 text-left align-top; overflow-wrap: anywhere; white-space: pre-wrap; }
+  .feedback-table th { @apply bg-[#1e1d25] text-[10px] font-medium text-zinc-400; white-space: normal; }
+  .feedback-table th:nth-child(1) { width: 6rem; }
+  .feedback-table th:nth-child(2) { width: 7rem; }
+  .feedback-table th:nth-child(3) { width: 6.5rem; }
+  .feedback-table th:nth-child(6) { width: 6.5rem; }
+  .feedback-row:last-child td { border-bottom: 0; }
+  .feedback-row:hover { background: #ffffff03; }
+  .feedback-row td:first-child > button { @apply inline-flex min-h-8 items-center rounded-lg border-violet-400/20 bg-violet-400/10 px-2 py-1 font-mono text-xs font-medium leading-5 tabular-nums text-violet-200; }
+  .feedback-row td:first-child > button:not(:disabled):hover {
+    @apply border-violet-300/60 bg-violet-400/25 text-white;
+    box-shadow: 0 0 0 1px #c4b5fd30;
+  }
+  .feedback-row-actions { @apply flex flex-wrap gap-1.5; }
+  .feedback-row-actions button { @apply min-h-9 px-2 py-1.5 text-xs; }
+  .feedback-icon { @apply size-9 min-h-9 border-transparent bg-transparent p-2 text-zinc-400; }
+  .feedback-icon svg { @apply size-4; }
+  .feedback-icon:hover { @apply border-transparent bg-white/5 text-violet-200; }
+  .feedback-icon-remove:hover { @apply bg-rose-400/10 text-rose-300; }
+  .feedback-icon:disabled { @apply border-transparent bg-transparent text-zinc-600; }
+  .importance-badge, .category-badge { @apply inline-flex min-h-8 items-center whitespace-nowrap rounded-lg border px-2 py-1 text-xs font-medium leading-5; }
+  .category-badge { @apply border-white/10 bg-white/5 text-zinc-300; }
+  .importance-1 { color: #8fe0b1; background: #132c22; border-color: #2d5541; }
+  .importance-2 { color: #c2dd8c; background: #262e1c; border-color: #4c5b35; }
+  .importance-3 { color: #ecd08d; background: #332c1d; border-color: #655331; }
+  .importance-4 { color: #f5b283; background: #36271e; border-color: #66452f; }
+  .importance-5 { color: #f7a2ae; background: #382127; border-color: #693a46; }
+  .feedback-editor { @apply bg-violet-400/5; }
+  .feedback-editor textarea { @apply min-h-24 resize-y; }
+  .feedback-editor input, .feedback-editor select, .feedback-editor textarea { @apply px-2 py-2 text-xs; }
+  .feedback-table small { @apply mt-1 block text-[10px] text-zinc-400; }
+  .feedback-new-row small { @apply mb-1 text-violet-300; }
+  .removal-confirmation { @apply my-3 rounded-xl border border-rose-400/25 bg-rose-400/5 p-3 text-xs leading-relaxed text-rose-100; }
+  .removal-confirmation button { @apply mt-3 mr-1; }
+  .remove-timestamp { @apply border-rose-400/30 bg-rose-400/10 text-rose-200; }
+  .alert { @apply my-3 rounded-xl border border-rose-400/30 bg-rose-400/10 p-3 text-xs leading-relaxed text-rose-200; overflow-wrap: anywhere; }
+  .setup-empty { @apply py-5; }
+  .setup-empty p { @apply mt-3 text-sm text-zinc-300; }
+  .setup-empty > span:last-child { @apply mt-2 block text-xs text-zinc-400; }
+  .visually-hidden { @apply sr-only; }
+  .table-scroll-hint { display: none; }
 }
 
-/* Keep the dense table scrollable on phones; tablet and desktop cells wrap. */
+/* Context stays above a player/notes split. The frame uses all available
+   space while context and notes have their own scroll boundaries. */
+@media (min-width: 768px) and (min-height: 600px) {
+  .app-shell { height: 100dvh; min-height: 0; overflow: hidden; }
+  .app-header { flex-shrink: 0; }
+  .review-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; margin: 1rem; }
+  .context-panel { flex-shrink: 0; max-height: 30dvh; overflow-y: auto; padding: 1rem 1.25rem; }
+  .context-panel > .section-kicker { margin-bottom: .5rem; }
+  .review-header { margin: 0; flex-direction: row; align-items: center; justify-content: space-between; gap: 1.5rem; }
+  .review-header > div:first-child { display: flex; flex-wrap: wrap; align-items: baseline; gap: .3rem 1rem; min-width: 0; }
+  .review-header h2 { font-size: 1.2rem; }
+  .review-header p { margin: 0; }
+  .review-header .form-hint { flex-basis: 100%; }
+  .review-header > .feedback-row-actions, .review-header > button { flex-shrink: 0; }
+  .review-pull-notes { font-size: .75rem; }
+  .context-card h2 { margin-top: 0; margin-bottom: .75rem; font-size: 1.1rem; }
+  .context-card form { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; }
+  .context-card form > .form-hint, .context-card form > .alert { grid-column: 1 / -1; }
+  .context-card textarea { min-height: 2.65rem; height: 2.65rem; }
+  .setup-actions { margin-top: .75rem; align-items: center; }
+  .setup-actions > p { width: auto; margin-right: auto; }
+  .video-review { flex: 1; display: grid; grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr); overflow: hidden; }
+  .playback-pane { display: flex; flex-direction: column; min-height: 0; padding: 1rem; border-bottom: 0; border-right: 1px solid #ffffff16; }
+  .playback-title, .recording-source, .playback-duration { flex-shrink: 0; }
+  .video-review video { flex: 1; min-height: 0; height: 0; max-height: none; aspect-ratio: auto; }
+  .feedback-pane { overflow-y: auto; overscroll-behavior-y: contain; }
+  .recording-source { max-height: 7.5rem; overflow-y: auto; }
+  .video-placeholder { flex: 1; min-height: 0; }
+}
+
+@media (min-width: 1280px) and (min-height: 600px) {
+  .video-review { grid-template-columns: minmax(0, 7fr) minmax(320px, 3fr); }
+  .review-panel { margin: 1.25rem 2rem; }
+}
+
+/* Compact note cards preserve table semantics and all six fields without
+   horizontal scrolling in the notes panel beside the video. */
+.feedback-table thead { position: absolute; top: 0; left: 0; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.feedback-table tbody { display: block; }
+.feedback-table tr.feedback-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); gap: .75rem; padding: 1rem; border-bottom: 1px solid #ffffff16; }
+.feedback-table .feedback-row td { display: block; border: 0; padding: 0; }
+
+.feedback-table tr.feedback-row:not(.feedback-editor) { display: flex; flex-wrap: wrap; }
+.feedback-row:not(.feedback-editor) td:nth-child(n+4) { flex-basis: 100%; }
+.feedback-row td:nth-child(4), .feedback-row td:nth-child(5) { grid-column: 1 / -1; }
+.feedback-row td:nth-child(4)::before, .feedback-row td:nth-child(5)::before { display: block; margin-bottom: .4rem; font-size: .6rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #9e9aa9; }
+.feedback-row td:nth-child(4)::before { content: "Observation"; }
+.feedback-row td:nth-child(5)::before { content: "Suggestion"; }
+.feedback-row td:nth-child(6) { grid-column: 1 / -1; }
+.feedback-row td:nth-child(6) > .feedback-row-actions { justify-content: end; }
+.feedback-table tr:not(.feedback-row) td { display: block; }
+
+
 @media (max-width: 767px) {
-  main { width: min(100% - 1rem, 90rem); margin-block: 1.5rem; }
-  .review-panel { padding: 1rem; }
-  .table-scroll-hint { display: block; }
-  .feedback-toolbar > div { min-width: 0; flex: 1; }
-  .review-panel input,
-  .review-panel textarea,
-  .review-panel select { font-size: 1rem; }
-  .feedback-toolbar select { width: 100%; }
-  .review-header .feedback-row-actions { width: 100%; }
-  .review-header .feedback-row-actions button { flex: 1; }
-  .feedback-table {
-    min-width: 56rem;
-  }
+  .app-header { padding: 1rem; }
+  .review-panel { margin: .75rem; }
+  .context-panel { padding: 1.25rem; }
+  .video-review input, .video-review select, .video-review textarea,
+  .context-card input, .context-card select, .context-card textarea { font-size: 1rem; }
+  .review-header h2 { font-size: 1.5rem; }
 }
 
-@media (min-width: 768px) and (max-width: 1023px) {
-  .feedback-table th,
-  .feedback-table td {
-    padding: 0.5rem;
-  }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* Best-effort native-control cleanup; onVolumeChange enforces silence in
+   browsers that do not expose these control pseudo-elements. */
+video[data-demo-muted]::-webkit-media-controls-mute-button,
+video[data-demo-muted]::-webkit-media-controls-volume-slider { display: none; }

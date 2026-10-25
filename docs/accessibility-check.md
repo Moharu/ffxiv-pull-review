@@ -31,3 +31,8 @@ Unit/integration suite at this checkpoint: 98 passing tests, plus passing lint a
 Checked https://ffxiv-pull-review.vercel.app/ in Chromium after the developer supplied the production URL. The page returned HTTP 200. Real hosted-video playback and seeking worked; Add Feedback paused playback. Creating, saving, editing, filtering, deleting, resetting the demo, and returning to the local review worked without changing localStorage. No uncaught page errors occurred in that flow.
 
 Repeated setup/demo/edit axe checks at 375, 768, and 1440 pixels: no reported violations, duplicate IDs, or page-wide horizontal overflow. The table scrolled within its region at 375px and fitted at 768/1440px. These are browser-emulation checks; screen-reader checks remain unperformed. Real-phone and browser-zoom results are recorded above. Local-file persistence/reselection was previously checked locally, not repeated in this deployed demo flow. Deployment commit identity was not verified through Vercel because connected project access returned 403.
+
+
+## Post-MVP visual redesign
+
+The checks above describe the original MVP. A subsequent Tailwind/dark workspace redesign changes panel scrolling and uses cards in narrower workspaces. The developer deferred a full accessibility recheck for that work. Previous real-phone and zoom results should not be treated as validation of the new layout. See the development journal for the redesign's visual browser checks.
