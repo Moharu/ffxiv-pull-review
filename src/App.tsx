@@ -72,13 +72,17 @@ function App() {
           </div>
         </div>
         <div className="demo-entry flex items-center gap-3">
-          <span className="hidden text-xs text-zinc-400 lg:inline">Your perspective. A better next pull.</span>
+          {!isDemo && <span className="demo-invitation">New here? <strong>No video needed.</strong></span>}
           <button type="button" hidden={isDemo} ref={(button) => {
             if (button && restoreDemoFocus.current) {
               button.focus()
               restoreDemoFocus.current = false
             }
-          }} onClick={() => setIsDemo(true)}>Try demo recording <span aria-hidden="true">↗</span></button>
+          }} onClick={() => setIsDemo(true)}>
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="size-4"><path d="M6 3.8a.8.8 0 0 1 1.2-.7l9 6.2a.8.8 0 0 1 0 1.4l-9 6.2a.8.8 0 0 1-1.2-.7V3.8Z" /></svg>
+            Try demo recording
+            <span aria-hidden="true">↗</span>
+          </button>
           {isDemo && <span className="session-tag">Demo workspace</span>}
         </div>
       </header>

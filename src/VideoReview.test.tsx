@@ -285,7 +285,7 @@ describe('VideoReview feedback mutations', () => {
     await user.type(screen.getByRole('textbox', { name: 'Observation' }), '   ')
     await user.type(screen.getByRole('textbox', { name: 'Suggested improvement' }), 'Keep my draft')
     await user.click(screen.getByRole('button', { name: 'Save' }))
-    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(within(screen.getByRole('form', { name: 'Add feedback' })).getByRole('alert')).toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: 'Suggested improvement' })).toHaveValue('Keep my draft')
     expect(screen.getByText('0 feedback entries', { exact: true })).toBeInTheDocument()
   })

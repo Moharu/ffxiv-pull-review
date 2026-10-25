@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import FeedbackItem from './FeedbackItem'
@@ -63,7 +63,7 @@ describe('FeedbackItem', () => {
     expect(
       screen.getByRole('textbox', { name: 'Observation' }),
     ).toHaveValue('Started moving earlier.')
-    expect(screen.getByRole('alert')).toHaveTextContent('Unable to save feedback.')
+    expect(within(screen.getByRole('form', { name: 'Edit feedback at 0:10: Moved too late.' })).getByRole('alert')).toHaveTextContent('Unable to save feedback.')
     expect(onUpdate).toHaveBeenCalledExactlyOnceWith({
       ...entry,
       observation: 'Started moving earlier.',

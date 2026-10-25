@@ -91,11 +91,11 @@ function FeedbackForm({ timestamp, onAddFeedback, onCancel }: FeedbackFormProps)
         </td>
         <td>
           <form id={formId} className="feedback-row-actions" aria-label="Add feedback" onSubmit={handleSubmit}>
+            {error && <Alert>{error}</Alert>}
             <SaveCancelActions onCancel={onCancel} />
           </form>
         </td>
       </tr>
-      {error && <tr><td colSpan={6}><Alert>{error}</Alert></td></tr>}
     </>
   )
 }

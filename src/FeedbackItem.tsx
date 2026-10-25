@@ -142,6 +142,7 @@ function FeedbackItem({ entry, duration, onUpdate, onDelete, canSeek, canModify,
           {isEditing ? (
             <form id={`${prefix}-editor`} className="feedback-row-actions" onSubmit={handleSave}
               aria-label={`Edit feedback at ${formatTimestamp(entry.timestamp)}: ${entry.observation}`}>
+              {error && <Alert>{error}</Alert>}
               <SaveCancelActions onCancel={closeEditor} disabled={!canModify} />
             </form>
           ) : (
@@ -174,9 +175,6 @@ function FeedbackItem({ entry, duration, onUpdate, onDelete, canSeek, canModify,
           )}
         </td>
       </tr>
-      {isEditing && error && (
-        <tr><td colSpan={6}><Alert>{error}</Alert></td></tr>
-      )}
       {isConfirmingRemoval && (
         <tr>
           <td colSpan={6}>

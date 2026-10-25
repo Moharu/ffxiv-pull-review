@@ -52,7 +52,14 @@
   }
   button[type="submit"]:hover, .feedback-toolbar > button:hover, .setup-actions button:first-of-type:hover { background: #cbbaff; }
   button:disabled, button[type="submit"]:disabled { @apply border-white/5 bg-white/5 text-zinc-500 shadow-none; }
-  .demo-entry button { @apply border-violet-400/25 bg-violet-400/10 text-violet-200; }
+  .demo-invitation { @apply text-xs text-zinc-400; }
+  .demo-invitation strong { @apply block font-medium text-zinc-200; }
+  .demo-entry button {
+    @apply min-h-11 border-violet-200/50 bg-violet-300 px-4 text-sm text-[#211734];
+    box-shadow: 0 0 24px #a78bfa20;
+  }
+  .demo-entry button:hover { @apply border-violet-100 bg-violet-200 text-[#211734]; }
+  .demo-entry button:active { @apply bg-violet-400; }
   .review-header { @apply mt-6 flex min-w-0 flex-col gap-4; }
   .review-header h2 { @apply text-2xl leading-tight; overflow-wrap: anywhere; }
   .review-header p { @apply mt-3 text-sm text-zinc-300; overflow-wrap: anywhere; }
@@ -102,6 +109,7 @@
     box-shadow: 0 0 0 1px #c4b5fd30;
   }
   .feedback-row-actions { @apply flex flex-wrap gap-1.5; }
+  .feedback-row-actions > .alert { flex-basis: 100%; margin: 0 0 .5rem; }
   .feedback-row-actions button { @apply min-h-9 px-2 py-1.5 text-xs; }
   .feedback-icon { @apply size-9 min-h-9 border-transparent bg-transparent p-2 text-zinc-400; }
   .feedback-icon svg { @apply size-4; }
@@ -186,6 +194,9 @@
 
 @media (max-width: 767px) {
   .app-header { padding: 1rem; }
+  .demo-entry:has(button:not([hidden])) { width: 100%; flex-wrap: wrap; }
+  .demo-entry button { flex: 1; }
+
   .review-panel { margin: .75rem; }
   .context-panel { padding: 1.25rem; }
   .video-review input, .video-review select, .video-review textarea,

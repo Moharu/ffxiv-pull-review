@@ -150,6 +150,10 @@ A short record of decisions, learning, and collaboration with AI. This is a retr
 
 - **Delivery checks:** At the developer’s request, reran all 102 tests, lint, the production build, and whitespace checks; all passed. Prepared the complete visual redesign milestone for commit/push as `feat: redesign review workspace with dark Tailwind styling`. Focused Mode remains documentation only; post-push CI and deployed verification are not yet confirmed. The previously deferred full accessibility recheck remains outside this delivery evidence.
 
+- **Demo discoverability follow-up:** The developer asked for a more prominent demo entry point for first-time visitors. Replaced the subdued outline treatment with a solid violet primary action and play icon, plus “New here? No video needed.” guidance. On narrow screens the action expands into available header width.
+
+- **Inline validation follow-up:** The developer noticed rejected feedback errors appearing outside the card. Moved creation/editing alerts from separate table rows into their own action forms within the card, above Save/Cancel. Updated regression assertions to require form-contained alerts; all 28 affected tests, lint, and build pass.
+
 ## Journal updates at issue completion
 
 Keep each entry brief. Record the developer's choices and AI's contribution honestly, including changed approaches that explain a useful tradeoff. Update status and delivery evidence rather than preserving stale progress notes.
