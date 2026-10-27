@@ -1,10 +1,13 @@
 import FeedbackForm from "./FeedbackForm"
 import FeedbackItem from "./FeedbackItem"
-import { useId, useRef, useState } from "react"
+import { useId, useRef } from "react"
 import { feedbackCategories } from "./types"
 import type { FeedbackCategory, FeedbackEntry } from "./types"
 
 type FeedbackListProps = {
+  categoryFilter: FeedbackCategory | "All"
+  onCategoryFilterChange: (category: FeedbackCategory | "All") => void
+  selectedFeedback: { id: string; request: number } | null
   entries: FeedbackEntry[]
   timestamp: number | null
   onStartFeedback: () => void
@@ -17,12 +20,11 @@ type FeedbackListProps = {
   onSeek: (seconds: number) => void
 }
 
-function FeedbackList({ onStartFeedback, onCancelFeedback, timestamp, onAddFeedback, entries, duration, onUpdate, onDelete, canSeek, onSeek }: FeedbackListProps) {
+function FeedbackList({ categoryFilter, onCategoryFilterChange, selectedFeedback, onStartFeedback, onCancelFeedback, timestamp, onAddFeedback, entries, duration, onUpdate, onDelete, canSeek, onSeek }: FeedbackListProps) {
   const filterId = useId()
   const scrollHelpId = useId()
   const restoreAddFocus = useRef(false)
   const summaryRef = useRef<HTMLParagraphElement | null>(null)
-  const [categoryFilter, setCategoryFilter] = useState<FeedbackCategory | "All">("All")
   const visibleEntries = entries.filter((entry) => categoryFilter === "All" || entry.category === categoryFilter).sort((a, b) => a.timestamp - b.timestamp)
 
   function handleDelete(id: string) {
@@ -47,7 +49,7 @@ function FeedbackList({ onStartFeedback, onCancelFeedback, timestamp, onAddFeedb
         id={filterId}
         value={categoryFilter}
         onChange={(event) =>
-          setCategoryFilter(event.target.value as FeedbackCategory | "All")
+          onCategoryFilterChange(event.target.value as FeedbackCategory | "All")
         }
       >
         <option value="All">All categories</option>
@@ -103,6 +105,7 @@ function FeedbackList({ onStartFeedback, onCancelFeedback, timestamp, onAddFeedb
           <FeedbackItem
             key={entry.id}
             entry={entry}
+            focusRequest={selectedFeedback?.id === entry.id ? selectedFeedback.request : undefined}
             duration={duration}
             onUpdate={onUpdate}
             onDelete={handleDelete}

@@ -17,7 +17,8 @@ The **[development journal](docs/development-journal.md)** is the companion to t
 ## What you can do
 
 - Set encounter, POV player/job, and pull notes alongside a local recording.
-- Watch with native playback controls; Add Feedback pauses and locks the current timestamp.
+- Watch with custom play/pause, seeking, playback-speed, and local-volume controls; Add Feedback pauses and locks the current timestamp.
+- Use importance-colored timeline bookmarks to reveal and focus feedback notes, including notes hidden by the category filter.
 - Save observations and suggested improvements with a category and importance from 1–5.
 - Seek from notes, edit entries inline, confirm deletion, and filter by category.
 - Restore your saved review after refreshing and reconnect the recording through metadata matching.
@@ -36,7 +37,7 @@ The current saved format is version 2. Version-1 reviews migrate automatically: 
 
 ## Demo recording
 
-Choose **Try demo recording** to explore the hosted M9S video without a local file. It loads only after opting in, with metadata preloading and no autoplay. Demo audio is muted and volume changes are reset to zero; local recordings retain their normal audio controls. Native demo volume controls are hidden where the browser supports it. The demo features Moharu Nn (Sage) in Vamp Fatale - M9S, with two feedback notes supplied by the recording’s owner at 1:07 and 5:06. Demo changes are temporary and never written over your saved review. **Reset demo** restores the starter notes; **Return to my review** restores your local session, including its selected video and unfinished inputs.
+Choose **Try demo recording** to explore the hosted M9S video without a local file. It loads only after opting in, with metadata preloading and no autoplay. Demo audio is muted and volume changes are reset to zero; local recordings retain their normal audio controls. The custom demo volume button is disabled; desktop local recordings have mute/unmute and an inline volume slider revealed on hover or keyboard focus. The demo features Moharu Nn (Sage) in Vamp Fatale - M9S, with two feedback notes supplied by the recording’s owner at 1:07 and 5:06. Demo changes are temporary and never written over your saved review. **Reset demo** restores the starter notes; **Return to my review** restores your local session, including its selected video and unfinished inputs.
 
 The public source URL and starter notes live in `src/demo.ts`. The video is hosted on Vercel Blob; no Blob token or upload SDK is needed in the frontend. If hosting fails, retry or return to local review. The demo depends on the availability of its public host.
 
@@ -69,13 +70,13 @@ Tests use Vitest, React Testing Library, user-event, and jsdom. Run `npm run tes
 
 ## Architecture and decisions
 
-`App` owns the persisted review and coordinates setup, readiness, and the isolated demo. `VideoReview` owns the selected file, media element reference, playback readiness, and recording-replacement flow. `FeedbackList`, `FeedbackItem`, and `FeedbackForm` handle filtering and table interactions. Shared types and utility functions centralize categories, importance, timestamp handling, validation, recording identity, and storage.
+`App` owns the persisted review and coordinates setup, readiness, and the isolated demo. `VideoReview` owns the selected file, media element reference, playback readiness, recording-replacement flow, category filter, and bookmark selection. `VideoPlayer` synchronizes its custom controls with media events; `FeedbackTimeline` positions and groups feedback bookmarks. `FeedbackList`, `FeedbackItem`, and `FeedbackForm` handle filtering and table interactions. Shared types and utility functions centralize categories, importance, timestamp handling, validation, recording identity, and storage.
 
 Controlled inputs keep drafts separate from saved data. Functional state updates preserve unrelated fields. Refs access the native video element; effects synchronize localStorage and clean up temporary object URLs. Filtered/sorted entries are derived during rendering. Native HTML supplies controls and semantics. Tailwind CSS 4 is integrated through its Vite plugin; shared component styles use `@apply`, with CSS media queries for the bounded playback workspace.
 
 ## Verification
 
-The latest post-MVP implementation checkpoint passed 102 tests, lint, and the production build. Tests cover timestamp and feedback validation, edits/deletion, persistence migration/recovery, recording matching, and demo isolation. jsdom media stubs test event handling; real playback was checked separately in Chromium against the deployed demo.
+The latest post-MVP implementation checkpoint passed 116 tests, lint, and the production build. Tests cover timestamp and feedback validation, edits/deletion, persistence migration/recovery, recording matching, and demo isolation. jsdom media stubs test event handling; real playback was checked separately in Chromium against the deployed demo.
 
 For the original MVP, deployed setup/demo/edit states passed axe scans at 375, 768, and 1440 pixels. The developer reported successful real-phone use and browser zoom checks at 200% and 400%, with visible keyboard focus and no clipping or page-wide horizontal scrolling. Screen-reader testing was not performed. These checks cover selected flows and do not establish complete accessibility conformance. See the [verification report](docs/accessibility-check.md) for evidence and limits.
 
@@ -87,7 +88,9 @@ The [project brief](docs/project-brief.md) records scope and the issue sequence.
 
 The **visual redesign** is complete locally: a dark Tailwind workspace with a compact context header and side-by-side video/feedback. Local checks are complete; post-push CI and deployed verification remain to be confirmed.
 
-Next is **Focused Mode**: viewport-filling video, overlay feedback controls, and feedback indicators on the progress bar. It is planned, not implemented. See [milestones and scope](docs/milestones.md) for details and open decisions.
+Custom playback controls and feedback timeline bookmarks are implemented locally as a prerequisite. Hover or focus a solid importance-colored bookmark to expand its importance/category inside one continuous balloon. Every bookmark opens a preview with labelled Observation and Suggestion; selecting a preview card reveals and focuses the note without seeking. Overlapping badges share a panel so every note remains selectable. The progress slider handles seeking.
+
+Next is **Focused Mode**: viewport-filling video and overlay feedback controls, reusing this player and timeline. Focused Mode itself is planned, not implemented. See [milestones and scope](docs/milestones.md) for details and open decisions.
 
 ## Working agreement
 

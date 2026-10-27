@@ -2,10 +2,10 @@ import { useEffect, useId, useRef, useState } from "react"
 import type { ChangeEvent, SyntheticEvent } from "react"
 import Alert from "./Alert"
 import FeedbackList from "./FeedbackList"
-import type { FeedbackEntry, RecordingIdentity } from "./types"
+import VideoPlayer from "./VideoPlayer"
+import type { FeedbackCategory, FeedbackEntry, RecordingIdentity } from "./types"
 import { getRecordingIdentity, matchesRecording } from "./utils/recording"
 
-import { formatTimestamp } from "./utils/timestamps"
 import { validateFeedback } from "./utils/feedback"
 
 type VideoReviewProps = {
@@ -22,6 +22,9 @@ type VideoReviewProps = {
 
 function VideoReview({ remoteSource, isSuspended = false, isSettingUp, hasReviewData, onReadyChange, recording, onRecordingChange, feedbackEntries, onFeedbackChange }: VideoReviewProps) {
   const prefix = useId()
+  const [categoryFilter, setCategoryFilter] = useState<FeedbackCategory | "All">("All")
+  const [selectedFeedback, setSelectedFeedback] = useState<{ id: string; request: number } | null>(null)
+  const selectionRequest = useRef(0)
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [timestamp, setTimestamp] = useState<number | null>(null)
   const [duration, setDuration] = useState<number | null>(null)
@@ -61,6 +64,7 @@ function VideoReview({ remoteSource, isSuspended = false, isSettingUp, hasReview
 
   function connectRecording(file: File, startNew = false) {
     onReadyChange(false)
+    setSelectedFeedback(null)
     setVideoFile(file)
     onRecordingChange(getRecordingIdentity(file), startNew)
     clearTimestamp()
@@ -153,6 +157,7 @@ function VideoReview({ remoteSource, isSuspended = false, isSettingUp, hasReview
   function handleDeleteFeedback(id: string) {
     if ((!videoFile && !remoteSource) || duration === null || videoError || pendingFile) return
     onFeedbackChange((previous) => previous.filter((entry) => entry.id !== id))
+    if (selectedFeedback?.id === id) setSelectedFeedback(null)
   }
 
   function handleSeek(seconds: number) {
@@ -178,7 +183,7 @@ function VideoReview({ remoteSource, isSuspended = false, isSettingUp, hasReview
         <h2 id={`${prefix}-video-review-heading`}>{isSettingUp ? "Recording" : "Recording playback"}</h2>
         <span className="session-tag">{remoteSource ? "Demo recording · Audio off" : "Local recording"}</span>
         </div>
-        {!remoteSource && <div className="recording-source">
+        {!remoteSource && <div className="recording-source" data-connected={videoFile ? "true" : undefined}>
         <p id={`${prefix}-video-help`} className="form-hint">
           Your video stays on this device. Select it again after refreshing.
         </p>
@@ -209,25 +214,23 @@ function VideoReview({ remoteSource, isSuspended = false, isSettingUp, hasReview
         </div>}
         {(videoFile || remoteSource) && (
           <>
-            <video
-              ref={videoRef}
-              controls
-              muted={Boolean(remoteSource)}
-              data-demo-muted={remoteSource ? "true" : undefined}
-              onVolumeChange={(event) => {
-                if (!remoteSource) return
-                // Native controls cannot disable volume alone across browsers.
-                const video = event.currentTarget
-                if (!video.muted) video.muted = true
-                if (video.volume !== 0) video.volume = 0
-              }}
-              preload="metadata"
+            <VideoPlayer
+              videoRef={videoRef}
+              duration={duration}
+              ready={duration !== null && videoError === "" && pendingFile === null}
+              audioLocked={Boolean(remoteSource)}
+              entries={isSettingUp ? [] : feedbackEntries}
               onLoadedMetadata={handleLoadedMetadata}
               onError={handleVideoError}
+              onSeek={handleSeek}
+              onSelectFeedback={(id) => {
+                const entry = feedbackEntries.find((entry) => entry.id === id)
+                if (!entry) return
+                if (categoryFilter !== "All" && categoryFilter !== entry.category) setCategoryFilter("All")
+                selectionRequest.current += 1
+                setSelectedFeedback({ id, request: selectionRequest.current })
+              }}
             />
-            {duration !== null && (
-              <p className="playback-duration">Recording duration: {formatTimestamp(duration)}</p>
-            )}
           </>
         )}
       </div>
@@ -272,6 +275,9 @@ function VideoReview({ remoteSource, isSuspended = false, isSettingUp, hasReview
           <Alert>Some feedback timestamps exceed this recording's duration. Those moments cannot be sought; edit their timestamps or choose the original recording. Notes have been preserved.</Alert>
         )}
         {!isSettingUp && (videoFile || remoteSource || feedbackEntries.length > 0) && <FeedbackList
+          categoryFilter={categoryFilter}
+          onCategoryFilterChange={(category) => { setCategoryFilter(category); setSelectedFeedback(null) }}
+          selectedFeedback={selectedFeedback}
           timestamp={timestamp}
           onStartFeedback={handleStartFeedback}
           onCancelFeedback={clearTimestamp}

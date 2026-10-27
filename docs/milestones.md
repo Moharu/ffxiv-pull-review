@@ -21,14 +21,30 @@ See the [development journal](development-journal.md#post-mvp--dark-tailwind-wor
 
 ## Milestone 2 — Focused Mode
 
-**Status:** Planned; implementation has not started.
+**Status:** Focused Mode remains planned. Its custom-player prerequisite has been reviewed and is being delivered as a separate checkpoint.
 
 **Outcome:** Review footage with the video occupying the entire viewport and feedback tools available as overlays.
+
+### Prerequisite — Custom video UI
+
+Implemented before Focused Mode at the developer’s request:
+
+- Play/pause button and a separate video-surface tap/click target; controls do not toggle playback accidentally.
+- Desktop local-volume mute/unmute and an inline slider revealed on hover or keyboard focus; volume controls are hidden on mobile/coarse-pointer devices. Demo audio stays locked off.
+- A borderless playback-speed button opens choices from 0.25× through 2× in 0.25 increments. Hover/focus tooltips describe controls; a fullscreen icon is shown disabled until Focused Mode work.
+- Application-owned seek slider and playback time. No picture-in-picture or download actions; the video requests inline playback and disables picture-in-picture where supported.
+- Individual importance-colored timeline ticks, with solid numbered badges that expand on hover/focus without moving their anchors. All bookmarks open labelled Observation/Suggestion preview cards; badges group when they would overlap.
+- Selecting a preview card highlights, scrolls to, and focuses the corresponding note, clearing an incompatible category filter. Opening a preview does not seek or discard an open draft.
+
+Local checks: 116 tests, lint, and production build pass. Real Chromium demo playback, seeking, speed changes, video-surface activation, and bookmark reveal/focus were checked at desktop/tablet/mobile widths. Local volume controls used a metadata fixture; native audio decoding was not asserted. Full accessibility, real-device, and deployed checks remain deferred for this increment.
 
 ### Planned scope
 
 - Enter and leave Focused Mode from an active local or demo review.
 - Fit the full video frame within the viewport without cropping, including ultrawide footage.
+- Show a minimal, translucent context header over the video on pointer movement; hide it after inactivity while keeping keyboard/touch access.
+- Put feedback in a collapsible right-hand column.
+- During playback, promote and highlight notes from 3 seconds before their timestamp until 15 seconds after it. The start is inclusive and end exclusive: a 1:00 note is active at 0:57 and no longer active at 1:15. Expired notes return to normal order and remain available.
 - Present playback and feedback controls as overlays, with a way to view and work with timestamped feedback without leaving the video.
 - Show indicators for saved feedback at the corresponding positions on the video progress bar.
 - Preserve the current review, playback position, and local/demo isolation when switching modes. Reuse the existing add-and-pause, locked draft timestamp, save/cancel, editing, and deletion behaviour.
@@ -37,10 +53,10 @@ See the [development journal](development-journal.md#post-mvp--dark-tailwind-wor
 
 - Use a viewport-filling application mode alone, or also offer the browser Fullscreen API.
 - Overlay placement and visibility while watching, typing, or using a touch device.
-- Marker interaction: seeking, selecting a note, and handling multiple notes at the same timestamp.
-- Whether importance colors should also distinguish timeline indicators.
+- How the existing bookmark picker and note focus should work when notes become overlays.
+- Overlay treatment for the existing importance colors, expanded badges, and overlapping-note picker.
 
-The browser's native video progress bar cannot be extended with application feedback markers. Plan for an application-owned seek bar and coordinate it with the existing media element; the exact control design remains to be decided.
+The custom player now supplies the application-owned seek bar and bookmarks; Focused Mode should reuse them rather than introduce a second media element or duplicate timeline state.
 
 ### Completion criteria
 

@@ -28,6 +28,25 @@ async function openDemo() {
 }
 
 describe('demo recording', () => {
+  it('reveals and focuses a bookmarked note even when its category is filtered out', async () => {
+    const { user, region } = await openDemo()
+    await user.selectOptions(within(region).getByRole('combobox', { name: 'Filter by category' }), 'Mitigation')
+    expect(within(region).queryByRole('cell', { name: 'Dosis reapplication' })).not.toBeInTheDocument()
+    const bookmark = within(region).getByRole('button', { name: /Show feedback at 1:07/ })
+    await user.click(bookmark)
+    await user.click(within(within(region).getByRole('group', { name: 'Feedback preview' })).getByRole('button', { name: /Dosis reapplication/ }))
+    expect(within(region).getByRole('combobox', { name: 'Filter by category' })).toHaveValue('All')
+    const row = within(region).getByRole('cell', { name: 'Dosis reapplication' }).closest('tr')!
+    expect(row).toHaveFocus()
+    expect(row).toHaveClass('feedback-selected')
+    await user.click(within(region).getByRole('button', { name: 'Add Feedback' }))
+    await user.type(within(region).getByRole('textbox', { name: 'Observation' }), 'Keep this draft')
+    await user.click(bookmark)
+    await user.click(within(within(region).getByRole('group', { name: 'Feedback preview' })).getByRole('button', { name: /Dosis reapplication/ }))
+    expect(row).toHaveFocus()
+    expect(within(region).getByRole('textbox', { name: 'Observation' })).toHaveValue('Keep this draft')
+  })
+
   it('starts silent and restores the demo audio guardrail after volume changes', async () => {
     const { video } = await openDemo()
     expect(video.muted).toBe(true)

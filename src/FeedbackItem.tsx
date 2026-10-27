@@ -9,6 +9,7 @@ import { feedbackCategories } from "./types"
 import { convertTimestampDraftToSeconds, formatTimestamp } from "./utils/timestamps"
 
 type FeedbackItemProps = {
+  focusRequest?: number
   entry: FeedbackEntry
   duration: number | null
   onUpdate: (entry: FeedbackEntry) => string | null
@@ -18,7 +19,8 @@ type FeedbackItemProps = {
   onSeek: (seconds: number) => void
 }
 
-function FeedbackItem({ entry, duration, onUpdate, onDelete, canSeek, canModify, onSeek }: FeedbackItemProps) {
+function FeedbackItem({ focusRequest, entry, duration, onUpdate, onDelete, canSeek, canModify, onSeek }: FeedbackItemProps) {
+  const lastFocusRequest = useRef<number | undefined>(undefined)
   const [isEditing, setIsEditing] = useState(false)
   const [timeDraft, setTimeDraft] = useState("")
   const [draft, setDraft] = useState(entry)
@@ -73,7 +75,15 @@ function FeedbackItem({ entry, duration, onUpdate, onDelete, canSeek, canModify,
 
   return (
     <>
-      <tr className={isEditing ? "feedback-row feedback-editor" : "feedback-row"}
+      <tr className={`${isEditing ? "feedback-row feedback-editor" : "feedback-row"}${focusRequest !== undefined ? " feedback-selected" : ""}`}
+        tabIndex={-1}
+        ref={(row) => {
+          if (row && focusRequest !== undefined && lastFocusRequest.current !== focusRequest) {
+            lastFocusRequest.current = focusRequest
+            row.focus({ preventScroll: true })
+            row.scrollIntoView?.({ block: "nearest", inline: "nearest" })
+          }
+        }}
         onKeyDown={(event) => {
           if (event.key === "Escape" && isEditing) {
             event.preventDefault()
