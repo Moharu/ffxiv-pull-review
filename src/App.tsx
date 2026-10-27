@@ -1,3 +1,4 @@
+import ReviewWorkspace from "./ReviewWorkspace"
 import RecordingContextForm from './RecordingContextForm'
 import VideoReview from './VideoReview'
 import DemoReview from './DemoReview'
@@ -108,7 +109,7 @@ function App() {
           {storageEnabled && <button type="button" onClick={() => setWriteError(saveReview(review))}>Retry save</button>}
         </div>
       )}
-      <section hidden={isDemo} className="review-panel" aria-label="Raid review">
+      <ReviewWorkspace hidden={isDemo} label="Raid review">
         <div className="context-panel">
           <div className="section-kicker">Recording context</div>
           {isSettingUp ? (
@@ -153,7 +154,7 @@ function App() {
           isSettingUp={isSettingUp}
           onReadyChange={setVideoReady}
         />
-      </section>
+      </ReviewWorkspace>
     </main>
   )
 }

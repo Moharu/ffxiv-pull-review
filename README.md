@@ -76,7 +76,7 @@ Controlled inputs keep drafts separate from saved data. Functional state updates
 
 ## Verification
 
-The latest post-MVP implementation checkpoint passed 116 tests, lint, and the production build. Tests cover timestamp and feedback validation, edits/deletion, persistence migration/recovery, recording matching, and demo isolation. jsdom media stubs test event handling; real playback was checked separately in Chromium against the deployed demo.
+The latest post-MVP implementation checkpoint passed 134 tests, lint, and the production build. Tests cover timestamp and feedback validation, edits/deletion, persistence migration/recovery, recording matching, and demo isolation. jsdom media stubs test event handling; real playback was checked separately in Chromium against the deployed demo.
 
 For the original MVP, deployed setup/demo/edit states passed axe scans at 375, 768, and 1440 pixels. The developer reported successful real-phone use and browser zoom checks at 200% and 400%, with visible keyboard focus and no clipping or page-wide horizontal scrolling. Screen-reader testing was not performed. These checks cover selected flows and do not establish complete accessibility conformance. See the [verification report](docs/accessibility-check.md) for evidence and limits.
 
@@ -88,9 +88,11 @@ The [project brief](docs/project-brief.md) records scope and the issue sequence.
 
 The **visual redesign** is complete locally: a dark Tailwind workspace with a compact context header and side-by-side video/feedback. Local checks are complete; post-push CI and deployed verification remain to be confirmed.
 
-Custom playback controls and feedback timeline bookmarks are implemented locally as a prerequisite. Hover or focus a solid importance-colored bookmark to expand its importance/category inside one continuous balloon. Every bookmark opens a preview with labelled Observation and Suggestion; selecting a preview card reveals and focuses the note without seeking. Overlapping badges share a panel so every note remains selectable. The progress slider handles seeking.
+Custom playback controls and feedback timeline bookmarks were committed and pushed as `3bc4d5f` before Focused Mode work. Single notes show only a colored tick by default; overlapping groups add a “+N” balloon. Hover or focus a solid importance-colored bookmark to expand its importance/category inside one continuous balloon. Every bookmark opens a preview with labelled Observation and Suggestion; selecting a preview card reveals and focuses the note without seeking. Overlapping badges share a panel so every note remains selectable. A 450ms hover grace period keeps the balloon reachable from the bar. Tapping a tick opens its preview; dragging from the same spot scrubs, including when the seek thumb overlaps it. The progress slider handles seeking.
 
-Next is **Focused Mode**: viewport-filling video and overlay feedback controls, reusing this player and timeline. Focused Mode itself is planned, not implemented. See [milestones and scope](docs/milestones.md) for details and open decisions.
+**Focused Mode** is implemented and reviewed. Post-push CI and deployed verification remain to be confirmed. Enter it from the fullscreen icon after starting a review. It requests browser fullscreen, with a viewport-filling fallback, and reuses the same player and drafts. A minimal context overlay fades after inactivity; movement or the context control reveals it. Notes slide over the right side of the video in a drawer controlled by a persistent edge arrow; it opens by default on each fullscreen entry. The player keeps its size, and the drawer leaves bottom controls accessible.
+
+During focused playback, notes are highlighted and promoted from 3 seconds before to 15 seconds after their timestamp. A 1:00 note is active at 0:57 and expires at 1:15. Relevant timeline bookmarks also open their preview cards automatically without taking keyboard focus. A preview can be dismissed until the next relevance window. Category filters still apply; expired notes remain available. Ordering is held steady while editing or confirming deletion so timed updates do not interrupt the interaction. See [milestones and scope](docs/milestones.md) for details and open decisions.
 
 ## Working agreement
 

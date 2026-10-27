@@ -53,7 +53,7 @@ describe("custom video controls", () => {
     expect(screen.getByRole("button", { name: "Play video" })).toBeDisabled()
     expect(screen.getByRole("slider", { name: "Playback position" })).toBeDisabled()
     expect(screen.getByRole("button", { name: "Playback speed" })).toBeDisabled()
-    expect(screen.getByRole("button", { name: "Fullscreen — coming soon" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Enter fullscreen" })).toBeDisabled()
   })
 
   it("synchronizes playback time, seeks, and offers the eight quarter-step speeds", async () => {
@@ -81,9 +81,9 @@ describe("custom video controls", () => {
     const speed = screen.getByRole("button", { name: "Playback speed" })
     expect(speed).toHaveAccessibleDescription("Playback speed")
     expect(screen.getByRole("button", { name: "Play" })).toHaveAccessibleDescription("Play")
-    const fullscreen = screen.getByRole("button", { name: "Fullscreen — coming soon" })
+    const fullscreen = screen.getByRole("button", { name: "Enter fullscreen" })
     expect(fullscreen).toBeDisabled()
-    expect(fullscreen).toHaveAccessibleDescription("Fullscreen — coming soon")
+    expect(fullscreen).toHaveAccessibleDescription("Enter fullscreen")
     await user.click(speed)
     await user.tab()
     await user.keyboard("{Escape}")
@@ -133,7 +133,7 @@ describe("custom video controls", () => {
     expect(onSeek).not.toHaveBeenCalled()
     expect(onSelectFeedback).not.toHaveBeenCalled()
     fireEvent.pointerLeave(axis)
-    expect(bookmark).not.toHaveClass("bookmark-hovered")
+    expect(bookmark).toHaveClass("bookmark-hovered")
   })
 
   it("closes a single-note preview with Escape or its close action", async () => {

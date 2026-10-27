@@ -218,7 +218,7 @@
 .stage-play { display: grid; place-items: center; width: 3.5rem; height: 3.5rem; font-size: 2rem; color: #e5ddff; background: #16131dcc; border: 1px solid #b6a0ff50; border-radius: 50%; }
 .video-tap-target:hover .stage-play { background: #382c50dd; }
 .player-buffering { position: absolute; top: 1rem; left: 1rem; pointer-events: none; font-size: .75rem; padding: .4rem .7rem; border-radius: .5rem; background: #000b; }
-.player-controls { flex-shrink: 0; padding: .5rem 1rem .65rem; border-top: 1px solid #ffffff0d; }
+.player-controls { flex-shrink: 0; padding: .5rem 1rem .65rem; border: 0; }
 .player-control-row { display: flex; align-items: center; gap: .65rem; }
 .player-icon { display: inline-grid; place-items: center; width: 2.5rem; min-height: 2.5rem; padding: .55rem; background: transparent; border-color: transparent; }
 .player-icon svg { width: 1.15rem; height: 1.15rem; }
@@ -300,3 +300,85 @@
   .player-control-row { gap: .25rem; }
   .player-time { font-size: .65rem; }
 }
+
+/* Focused Mode uses the same mounted player; the workspace is also the native
+   fullscreen target. Its context is an overlay rather than a layout row. */
+.review-panel.is-focused {
+  --focused-notes-width: clamp(18rem, 28vw, 25rem);
+  position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column;
+  width: 100vw; height: 100dvh; min-height: 0; margin: 0; border: 0; border-radius: 0; background: #08080c;
+}
+.review-panel.is-focused:fullscreen { width: 100%; height: 100%; }
+.is-focused .video-review { position: relative; display: grid; flex: 1; grid-template-columns: minmax(0, 1fr); width: 100%; height: 100%; min-height: 0; overflow: hidden; }
+.is-focused .playback-pane { display: flex; flex-direction: column; min-height: 0; padding: 0; border: 0; background: #000; }
+.is-focused .playback-title, .is-focused .recording-source { display: none; }
+.is-focused .custom-player { flex: 1; width: 100%; height: 0; border: 0; border-radius: 0; }
+.is-focused .video-stage { flex: 1; height: 0; min-height: 0; max-height: none; aspect-ratio: auto; }
+.is-focused .video-stage video { border-radius: 0; }
+.is-focused .player-controls { background: #08080ce6; }
+.is-focused .player-control-row { flex-wrap: wrap; }
+.is-focused .feedback-pane { min-height: 0; overflow-y: auto; padding: 1rem; border-left: 1px solid #ffffff1a; background: #15131bf2; overscroll-behavior-y: contain; }
+.is-focused .context-panel {
+  position: absolute; z-index: 80; top: .75rem; left: .75rem; right: calc(var(--focused-notes-width) + .75rem);
+  max-height: min(40dvh, 18rem); padding: .65rem .9rem; border: 1px solid #ffffff12; border-radius: .75rem;
+  background: #17131dbd; backdrop-filter: blur(14px); overflow-y: auto; opacity: 0; pointer-events: none;
+  transform: translateY(-.5rem); transition: opacity .18s, transform .18s;
+}
+.is-focused.notes-collapsed .context-panel { right: .75rem; }
+.is-focused[data-context-visible] .context-panel, .is-focused .context-panel:focus-within, .is-focused .context-panel:has(form), .is-focused .context-panel:has(.removal-confirmation) {
+  opacity: 1; pointer-events: auto; transform: none;
+}
+.is-focused .context-panel > .section-kicker, .is-focused .review-header .form-hint, .is-focused .review-header .review-pull-notes { display: none; }
+.is-focused .review-header { margin: 0; display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; }
+.is-focused .review-header > div:first-child { display: flex; flex-wrap: wrap; align-items: baseline; gap: .4rem .75rem; }
+.is-focused .review-header h2 { font-size: .95rem; }
+.is-focused .review-header p { margin: 0; font-size: .7rem; }
+.is-focused .review-header button { min-height: 2rem; padding: .35rem .5rem; font-size: .65rem; }
+.feedback-table tr.feedback-relevant { background: #b6a0ff1c; box-shadow: inset 3px 0 #c4b5fd; }
+.relevant-label { display: block; margin-bottom: .35rem; color: #d6caff; font-size: .55rem; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; }
+@media (max-width: 767px) {
+
+  .is-focused .context-panel { right: .75rem; }
+}
+
+.feedback-table tr.feedback-relevant { position: relative; padding-top: 2.5rem; }
+.feedback-relevant .relevant-label { position: absolute; top: .75rem; left: 1rem; margin: 0; }
+/* In fullscreen the controls sit over the footage, not in a row that reduces
+   the video's viewport area. Contain still preserves the entire source frame. */
+.is-focused .custom-player { position: relative; }
+.is-focused .video-stage { position: absolute; inset: 0; width: 100%; height: 100%; }
+.is-focused .player-controls { position: absolute; bottom: 0; left: 0; right: 0; z-index: 40; background: linear-gradient(transparent, #08080ce8 40%); }
+
+/* A persistent edge handle travels with the notes drawer. The panel overlays
+   the player and leaves bottom controls accessible in both drawer states. */
+.notes-drawer { display: contents; }
+.is-focused .notes-drawer {
+  position: absolute; top: 0; right: 0; bottom: 8rem; z-index: 90;
+  display: block; width: min(var(--focused-notes-width), calc(100% - 2.5rem));
+  transform: translateX(0); transition: transform .22s ease;
+}
+.is-focused .notes-drawer[data-open="false"] { transform: translateX(100%); }
+.is-focused .notes-drawer .feedback-pane { height: 100%; border-radius: 0 0 0 .75rem; box-shadow: -12px 0 32px #0005; }
+.notes-drawer-handle {
+  position: absolute; top: 50%; left: -2rem; transform: translateY(-50%);
+  width: 2rem; min-height: 4rem; padding: .35rem; border-right: 0;
+  border-radius: .65rem 0 0 .65rem; background: #26212ff2; color: #d8c9f0;
+}
+.notes-drawer-handle svg { width: 1.25rem; height: 1.25rem; }
+.notes-drawer-handle:hover { background: #3c304d; }
+@media (max-width: 767px) {
+  .is-focused .notes-drawer { width: min(22rem, calc(100% - 2.5rem)); bottom: 11rem; }
+}
+
+/* Quiet timeline by default: lone notes show a tick, clusters show +N. The
+   hidden single-note button stays keyboard reachable and appears on focus. */
+.bookmark-single .bookmark-button { opacity: 0; pointer-events: none; }
+.bookmark-single.bookmark-hovered .bookmark-button,
+.bookmark-single.bookmark-open .bookmark-button,
+.bookmark-single:focus-within .bookmark-button { opacity: 1; pointer-events: auto; }
+.bookmark-group .bookmark-priority { display: none; }
+.bookmark-group.bookmark-hovered .bookmark-priority,
+.bookmark-group.bookmark-open .bookmark-priority,
+.bookmark-group:focus-within .bookmark-priority { display: inline; }
+.bookmark-open .bookmark-description { display: inline; }
+.seek-slider { touch-action: none; }

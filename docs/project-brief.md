@@ -70,4 +70,4 @@ The app is available at https://ffxiv-pull-review.vercel.app/ with an opt-in hos
 
 ## Post-MVP milestones
 
-The [milestone plan](milestones.md) tracks work after the original eight issues. Visual redesign is implementation-complete locally; Focused Mode is planned next, with viewport-filling video, overlay feedback controls, and indicators on the video progress bar. These additions extend the delivered MVP rather than reopening its original scope.
+The [milestone plan](milestones.md) tracks work after the original eight issues. Visual redesign is implementation-complete locally; Focused Mode is implemented and reviewed, with viewport-filling video, a fading context overlay, a collapsible notes column, and playback-driven note relevance. The custom-player prerequisite was pushed separately as `3bc4d5f`. These additions extend the delivered MVP rather than reopening its original scope.

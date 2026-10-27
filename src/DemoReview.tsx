@@ -1,3 +1,4 @@
+import ReviewWorkspace from "./ReviewWorkspace"
 import { useCallback, useRef, useState } from "react"
 import VideoReview from "./VideoReview"
 import { createDemoFeedback, demoContext, demoVideoUrl } from "./demo"
@@ -28,7 +29,7 @@ function DemoReview({ onExit }: { onExit: () => void }) {
   const focusHeading = useCallback((heading: HTMLHeadingElement | null) => heading?.focus(), [])
 
   return (
-    <section className="review-panel" aria-label="Demo review">
+    <ReviewWorkspace label="Demo review">
       <div className="context-panel">
         <div className="section-kicker">Recording context</div>
         <header className="review-header">
@@ -64,7 +65,7 @@ function DemoReview({ onExit }: { onExit: () => void }) {
         )}
       </div>
       <DemoSession key={generation} />
-    </section>
+    </ReviewWorkspace>
   )
 }
 

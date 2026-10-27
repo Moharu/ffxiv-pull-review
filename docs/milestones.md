@@ -21,7 +21,7 @@ See the [development journal](development-journal.md#post-mvp--dark-tailwind-wor
 
 ## Milestone 2 — Focused Mode
 
-**Status:** Focused Mode remains planned. Its custom-player prerequisite has been reviewed and is being delivered as a separate checkpoint.
+**Status:** Implementation complete and reviewed by the developer. Post-push CI and deployed verification remain to be confirmed. The preceding custom-player checkpoint was committed and pushed as `3bc4d5f`.
 
 **Outcome:** Review footage with the video occupying the entire viewport and feedback tools available as overlays.
 
@@ -31,32 +31,33 @@ Implemented before Focused Mode at the developer’s request:
 
 - Play/pause button and a separate video-surface tap/click target; controls do not toggle playback accidentally.
 - Desktop local-volume mute/unmute and an inline slider revealed on hover or keyboard focus; volume controls are hidden on mobile/coarse-pointer devices. Demo audio stays locked off.
-- A borderless playback-speed button opens choices from 0.25× through 2× in 0.25 increments. Hover/focus tooltips describe controls; a fullscreen icon is shown disabled until Focused Mode work.
+- A borderless playback-speed button opens choices from 0.25× through 2× in 0.25 increments. Hover/focus tooltips describe controls; the fullscreen icon now enters/exits the mode described below.
 - Application-owned seek slider and playback time. No picture-in-picture or download actions; the video requests inline playback and disables picture-in-picture where supported.
-- Individual importance-colored timeline ticks, with solid numbered badges that expand on hover/focus without moving their anchors. All bookmarks open labelled Observation/Suggestion preview cards; badges group when they would overlap.
+- Individual importance-colored timeline ticks: single notes hide their balloon until hover/focus, while overlapping groups show “+N” by default. A 450ms hover grace bridges the bar and balloon; tapping a tick opens its preview while dragging still scrubs. Solid balloons expand from a fixed edge. All bookmarks open labelled Observation/Suggestion preview cards; badges group when they would overlap.
 - Selecting a preview card highlights, scrolls to, and focuses the corresponding note, clearing an incompatible category filter. Opening a preview does not seek or discard an open draft.
 
 Local checks: 116 tests, lint, and production build pass. Real Chromium demo playback, seeking, speed changes, video-surface activation, and bookmark reveal/focus were checked at desktop/tablet/mobile widths. Local volume controls used a metadata fixture; native audio decoding was not asserted. Full accessibility, real-device, and deployed checks remain deferred for this increment.
 
-### Planned scope
+### Implemented scope
 
 - Enter and leave Focused Mode from an active local or demo review.
 - Fit the full video frame within the viewport without cropping, including ultrawide footage.
 - Show a minimal, translucent context header over the video on pointer movement; hide it after inactivity while keeping keyboard/touch access.
-- Put feedback in a collapsible right-hand column.
+- Put feedback in a slide-out right drawer with a persistent edge arrow for opening/closing.
 - During playback, promote and highlight notes from 3 seconds before their timestamp until 15 seconds after it. The start is inclusive and end exclusive: a 1:00 note is active at 0:57 and no longer active at 1:15. Expired notes return to normal order and remain available.
 - Present playback and feedback controls as overlays, with a way to view and work with timestamped feedback without leaving the video.
 - Show indicators for saved feedback at the corresponding positions on the video progress bar.
 - Preserve the current review, playback position, and local/demo isolation when switching modes. Reuse the existing add-and-pause, locked draft timestamp, save/cancel, editing, and deletion behaviour.
 
-### Decisions to settle before implementation
+### Interaction and browser decisions
 
-- Use a viewport-filling application mode alone, or also offer the browser Fullscreen API.
-- Overlay placement and visibility while watching, typing, or using a touch device.
-- How the existing bookmark picker and note focus should work when notes become overlays.
-- Overlay treatment for the existing importance colors, expanded badges, and overlapping-note picker.
+- Fullscreen targets the review workspace container, not the video alone, so context, notes, and controls remain available. An unsupported/denied browser request retains the same viewport-filling layout. Escape exits the fallback; native fullscreen exit is synchronized through fullscreenchange.
+- Context fades after approximately 2.2 seconds of pointer inactivity. Keyboard focus, context editing, and confirmation actions keep it available; a dedicated context control supports explicit access.
+- Notes open by default on each fullscreen entry and slide over the video without resizing it, with a persistent edge arrow for open/close. Collapse makes the offscreen content inert without unmounting drafts. A bookmark preview selection reopens the column and focuses the selected note. The player toolbar also offers Add Feedback while the column is collapsed.
+- Active notes sort ahead of the remaining notes, which retain timestamp order. Their timeline previews open automatically without moving focus, and dismissals last until the active window ends. Category filtering remains in force. Editing/removal interactions temporarily hold ordering stable, while relevance highlights continue updating.
+- Local media, demo isolation, playback position, and form drafts survive mode changes. Short/mobile layouts keep the drawer clear of bottom controls.
 
-The custom player now supplies the application-owned seek bar and bookmarks; Focused Mode should reuse them rather than introduce a second media element or duplicate timeline state.
+Local verification: 134 tests, lint, and build pass. Chromium checks covered fullscreen/fallback entry/exit, idle context, collapse/reopening, real hosted playback, relevance/expiry, preserved video identity/position, and mobile drawer controls at 1440×900, 1024×600, and 390×844. Real-phone fullscreen and a full accessibility audit remain unperformed for this increment.
 
 ### Completion criteria
 

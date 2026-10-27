@@ -4,10 +4,16 @@ import Alert from "./Alert"
 import FeedbackTimeline from "./FeedbackTimeline"
 import PlaybackSpeedControl from "./PlaybackSpeedControl"
 import PlayerTooltip from "./PlayerTooltip"
+import { useReviewWorkspace } from "./ReviewWorkspaceContext"
 import type { FeedbackEntry } from "./types"
 import { formatTimestamp } from "./utils/timestamps"
 
 type VideoPlayerProps = {
+  relevantIds?: ReadonlySet<string>
+  allowFullscreen?: boolean
+  onPlaybackChange?: (time: number, playing: boolean) => void
+  onStartFeedback?: () => void
+  canStartFeedback?: boolean
   videoRef: RefObject<HTMLVideoElement | null>
   duration: number | null
   ready: boolean
@@ -19,7 +25,8 @@ type VideoPlayerProps = {
   onSelectFeedback: (id: string) => void
 }
 
-function VideoPlayer({ videoRef, duration, ready, audioLocked, entries, onLoadedMetadata, onError, onSeek, onSelectFeedback }: VideoPlayerProps) {
+function VideoPlayer({ relevantIds, allowFullscreen = true, onPlaybackChange, onStartFeedback, canStartFeedback = false, videoRef, duration, ready, audioLocked, entries, onLoadedMetadata, onError, onSeek, onSelectFeedback }: VideoPlayerProps) {
+  const workspace = useReviewWorkspace()
   const [playing, setPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [volume, setVolume] = useState(1)
@@ -62,17 +69,20 @@ function VideoPlayer({ videoRef, duration, ready, audioLocked, entries, onLoaded
         <video ref={videoRef} playsInline disablePictureInPicture disableRemotePlayback controlsList="nodownload noremoteplayback"
           muted={audioLocked} preload="metadata"
           onLoadedMetadata={(event) => { setCurrentTime(event.currentTarget.currentTime); onLoadedMetadata(event) }}
-          onError={(event) => { setPlaying(false); setWaiting(false); onError(event) }}
-          onPlay={() => { setPlaying(true); setPlayError("") }}
-          onPause={() => setPlaying(false)}
-          onEnded={() => { setPlaying(false); setWaiting(false) }}
-          onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
+          onError={(event) => { setPlaying(false); setWaiting(false); onPlaybackChange?.(event.currentTarget.currentTime, false); onError(event) }}
+          onPlay={(event) => { setPlaying(true); setPlayError(""); onPlaybackChange?.(event.currentTarget.currentTime, true) }}
+          onPause={(event) => { setPlaying(false); onPlaybackChange?.(event.currentTarget.currentTime, false) }}
+          onEnded={(event) => { setPlaying(false); setWaiting(false); onPlaybackChange?.(event.currentTarget.currentTime, false) }}
+          onTimeUpdate={(event) => {
+            setCurrentTime(event.currentTarget.currentTime)
+            onPlaybackChange?.(event.currentTarget.currentTime, !event.currentTarget.paused)
+          }}
           onRateChange={(event) => setSpeed(event.currentTarget.playbackRate)}
           onVolumeChange={syncVolume}
           onWaiting={() => setWaiting(true)}
           onPlaying={() => setWaiting(false)}
           onCanPlay={() => setWaiting(false)}
-          onEmptied={() => { setCurrentTime(0); setPlaying(false); setWaiting(false); setPlayError("") }}
+          onEmptied={() => { setCurrentTime(0); setPlaying(false); setWaiting(false); setPlayError(""); onPlaybackChange?.(0, false) }}
         />
         <button type="button" className="video-tap-target" aria-label={playing ? "Pause video" : "Play video"}
           disabled={!ready} onClick={togglePlayback}>
@@ -81,8 +91,8 @@ function VideoPlayer({ videoRef, duration, ready, audioLocked, entries, onLoaded
         {waiting && playing && <span className="player-buffering" role="status">Buffering…</span>}
       </div>
       <div className="player-controls" role="group" aria-label="Video controls">
-        <FeedbackTimeline currentTime={currentTime} duration={duration} disabled={!ready} entries={entries}
-          onSeek={(seconds) => { onSeek(seconds); setCurrentTime(seconds) }} onSelectFeedback={onSelectFeedback} />
+        <FeedbackTimeline relevantIds={relevantIds} currentTime={currentTime} duration={duration} disabled={!ready} entries={entries}
+          onSeek={(seconds) => { onSeek(seconds); setCurrentTime(seconds); onPlaybackChange?.(seconds, playing) }} onSelectFeedback={onSelectFeedback} />
         <div className="player-control-row">
           <PlayerTooltip label={playing ? "Pause" : "Play"}>
           {(descriptionId) => <button type="button" className="player-icon" aria-label={playing ? "Pause" : "Play"}
@@ -121,11 +131,20 @@ function VideoPlayer({ videoRef, duration, ready, audioLocked, entries, onLoaded
             const video = videoRef.current
             if (video) video.playbackRate = value
           }} />
-          <PlayerTooltip label="Fullscreen — coming soon">
-            {(descriptionId) => <button type="button" className="player-icon" aria-label="Fullscreen — coming soon"
-              aria-describedby={descriptionId} disabled>
+          {workspace?.focused && <>
+            <PlayerTooltip label="Show recording context">
+              {(id) => <button type="button" className="player-icon" aria-label="Show recording context" aria-describedby={id} onClick={workspace.showContext}>ⓘ</button>}
+            </PlayerTooltip>
+            <PlayerTooltip label="Add feedback at current time">
+              {(id) => <button type="button" className="player-icon" aria-label="Add feedback at current time" aria-describedby={id} disabled={!canStartFeedback}
+                onClick={() => { workspace.setNotesOpen(true); onStartFeedback?.() }}>＋</button>}
+            </PlayerTooltip>
+          </>}
+          <PlayerTooltip label={workspace?.focused ? "Exit fullscreen" : "Enter fullscreen"}>
+            {(descriptionId) => <button type="button" className="player-icon fullscreen-control" aria-label={workspace?.focused ? "Exit fullscreen" : "Enter fullscreen"}
+              aria-describedby={descriptionId} disabled={!workspace || (!workspace.focused && (!ready || !allowFullscreen))} onClick={() => { void workspace?.toggleFullscreen() }}>
               <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" />
+                {workspace?.focused ? <path d="M3 8h5V3m8 0v5h5M8 21v-5H3m13 5v-5h5" /> : <path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" />}
               </svg>
             </button>}
           </PlayerTooltip>

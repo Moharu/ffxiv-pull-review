@@ -1,10 +1,12 @@
 import FeedbackForm from "./FeedbackForm"
 import FeedbackItem from "./FeedbackItem"
-import { useId, useRef } from "react"
+import { orderFeedback } from "./utils/relevance"
+import { useId, useRef, useState } from "react"
 import { feedbackCategories } from "./types"
 import type { FeedbackCategory, FeedbackEntry } from "./types"
 
 type FeedbackListProps = {
+  relevantIds: ReadonlySet<string>
   categoryFilter: FeedbackCategory | "All"
   onCategoryFilterChange: (category: FeedbackCategory | "All") => void
   selectedFeedback: { id: string; request: number } | null
@@ -20,16 +22,35 @@ type FeedbackListProps = {
   onSeek: (seconds: number) => void
 }
 
-function FeedbackList({ categoryFilter, onCategoryFilterChange, selectedFeedback, onStartFeedback, onCancelFeedback, timestamp, onAddFeedback, entries, duration, onUpdate, onDelete, canSeek, onSeek }: FeedbackListProps) {
+function FeedbackList({ relevantIds, categoryFilter, onCategoryFilterChange, selectedFeedback, onStartFeedback, onCancelFeedback, timestamp, onAddFeedback, entries, duration, onUpdate, onDelete, canSeek, onSeek }: FeedbackListProps) {
   const filterId = useId()
   const scrollHelpId = useId()
   const restoreAddFocus = useRef(false)
   const summaryRef = useRef<HTMLParagraphElement | null>(null)
-  const visibleEntries = entries.filter((entry) => categoryFilter === "All" || entry.category === categoryFilter).sort((a, b) => a.timestamp - b.timestamp)
+  const [frozenOrder, setFrozenOrder] = useState<string[] | null>(null)
+  const interactingIds = useRef(new Set<string>())
+  const filteredEntries = entries.filter((entry) => categoryFilter === "All" || entry.category === categoryFilter)
+  const positions = new Map((frozenOrder ?? []).map((id, index) => [id, index]))
+  const visibleEntries = frozenOrder
+    ? [...filteredEntries].sort((a, b) => (positions.get(a.id) ?? Infinity) - (positions.get(b.id) ?? Infinity) || a.timestamp - b.timestamp)
+    : orderFeedback(filteredEntries, relevantIds)
+
+  function handleInteraction(id: string, active: boolean) {
+    if (active) {
+      if (interactingIds.current.size === 0) {
+        setFrozenOrder(orderFeedback(entries, relevantIds).map((entry) => entry.id))
+      }
+      interactingIds.current.add(id)
+    } else {
+      interactingIds.current.delete(id)
+      if (interactingIds.current.size === 0) setFrozenOrder(null)
+    }
+  }
 
   function handleDelete(id: string) {
     // Move focus to a stable element before the deleted item unmounts.
     summaryRef.current?.focus()
+    handleInteraction(id, false)
     onDelete(id)
   }
 
@@ -48,9 +69,11 @@ function FeedbackList({ categoryFilter, onCategoryFilterChange, selectedFeedback
       <select
         id={filterId}
         value={categoryFilter}
-        onChange={(event) =>
+        onChange={(event) => {
+          interactingIds.current.clear()
+          setFrozenOrder(null)
           onCategoryFilterChange(event.target.value as FeedbackCategory | "All")
-        }
+        }}
       >
         <option value="All">All categories</option>
         {feedbackCategories.map((category) => (
@@ -105,6 +128,8 @@ function FeedbackList({ categoryFilter, onCategoryFilterChange, selectedFeedback
           <FeedbackItem
             key={entry.id}
             entry={entry}
+            relevant={relevantIds.has(entry.id)}
+            onInteractionChange={(active) => handleInteraction(entry.id, active)}
             focusRequest={selectedFeedback?.id === entry.id ? selectedFeedback.request : undefined}
             duration={duration}
             onUpdate={onUpdate}

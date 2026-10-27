@@ -9,6 +9,8 @@ import { feedbackCategories } from "./types"
 import { convertTimestampDraftToSeconds, formatTimestamp } from "./utils/timestamps"
 
 type FeedbackItemProps = {
+  onInteractionChange?: (active: boolean) => void
+  relevant?: boolean
   focusRequest?: number
   entry: FeedbackEntry
   duration: number | null
@@ -19,7 +21,7 @@ type FeedbackItemProps = {
   onSeek: (seconds: number) => void
 }
 
-function FeedbackItem({ focusRequest, entry, duration, onUpdate, onDelete, canSeek, canModify, onSeek }: FeedbackItemProps) {
+function FeedbackItem({ onInteractionChange, relevant = false, focusRequest, entry, duration, onUpdate, onDelete, canSeek, canModify, onSeek }: FeedbackItemProps) {
   const lastFocusRequest = useRef<number | undefined>(undefined)
   const [isEditing, setIsEditing] = useState(false)
   const [timeDraft, setTimeDraft] = useState("")
@@ -37,16 +39,19 @@ function FeedbackItem({ focusRequest, entry, duration, onUpdate, onDelete, canSe
     setTimeDraft(formatTimestamp(entry.timestamp))
     setError("")
     setIsEditing(true)
+    onInteractionChange?.(true)
   }
 
   function closeEditor() {
     setIsEditing(false)
+    onInteractionChange?.(false)
     setError("")
     restoreEditFocus.current = true
   }
 
   function cancelRemoval() {
     setIsConfirmingRemoval(false)
+    onInteractionChange?.(false)
     removeButtonRef.current?.focus()
   }
 
@@ -75,13 +80,20 @@ function FeedbackItem({ focusRequest, entry, duration, onUpdate, onDelete, canSe
 
   return (
     <>
-      <tr className={`${isEditing ? "feedback-row feedback-editor" : "feedback-row"}${focusRequest !== undefined ? " feedback-selected" : ""}`}
+      <tr className={`${isEditing ? "feedback-row feedback-editor" : "feedback-row"}${focusRequest !== undefined ? " feedback-selected" : ""}${relevant ? " feedback-relevant" : ""}`}
         tabIndex={-1}
+        data-relevant={relevant || undefined}
         ref={(row) => {
           if (row && focusRequest !== undefined && lastFocusRequest.current !== focusRequest) {
             lastFocusRequest.current = focusRequest
             row.focus({ preventScroll: true })
-            row.scrollIntoView?.({ block: "nearest", inline: "nearest" })
+            const pane = row.closest<HTMLElement>(".feedback-pane")
+            if (pane) {
+              const bounds = row.getBoundingClientRect()
+              const viewport = pane.getBoundingClientRect()
+              if (bounds.top < viewport.top || bounds.height > viewport.height) pane.scrollTop += bounds.top - viewport.top
+              else if (bounds.bottom > viewport.bottom) pane.scrollTop += bounds.bottom - viewport.bottom
+            }
           }
         }}
         onKeyDown={(event) => {
@@ -91,6 +103,7 @@ function FeedbackItem({ focusRequest, entry, duration, onUpdate, onDelete, canSe
           }
         }}>
         <td>
+          {relevant && <span className="relevant-label">Now relevant</span>}
           {isEditing ? (
             <>
               <label className="visually-hidden" htmlFor={`${prefix}-time`}>Timestamp (m:ss)</label>
@@ -176,7 +189,7 @@ function FeedbackItem({ focusRequest, entry, duration, onUpdate, onDelete, canSe
                 aria-label={`Remove feedback at ${formatTimestamp(entry.timestamp)}: ${entry.observation}`}
                 aria-expanded={isConfirmingRemoval}
                 aria-controls={isConfirmingRemoval ? `${prefix}-removal` : undefined}
-                onClick={() => setIsConfirmingRemoval(true)}>
+                onClick={() => { setIsConfirmingRemoval(true); onInteractionChange?.(true) }}>
                 <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
                   <path d="m6 6 12 12M18 6 6 18" />
                 </svg>

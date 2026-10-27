@@ -3,6 +3,8 @@ import type { ChangeEvent, SyntheticEvent } from "react"
 import Alert from "./Alert"
 import FeedbackList from "./FeedbackList"
 import VideoPlayer from "./VideoPlayer"
+import { useReviewWorkspace } from "./ReviewWorkspaceContext"
+import { isFeedbackRelevant } from "./utils/relevance"
 import type { FeedbackCategory, FeedbackEntry, RecordingIdentity } from "./types"
 import { getRecordingIdentity, matchesRecording } from "./utils/recording"
 
@@ -21,6 +23,8 @@ type VideoReviewProps = {
 }
 
 function VideoReview({ remoteSource, isSuspended = false, isSettingUp, hasReviewData, onReadyChange, recording, onRecordingChange, feedbackEntries, onFeedbackChange }: VideoReviewProps) {
+  const workspace = useReviewWorkspace()
+  const [playback, setPlayback] = useState({ time: 0, playing: false })
   const prefix = useId()
   const [categoryFilter, setCategoryFilter] = useState<FeedbackCategory | "All">("All")
   const [selectedFeedback, setSelectedFeedback] = useState<{ id: string; request: number } | null>(null)
@@ -34,6 +38,10 @@ function VideoReview({ remoteSource, isSuspended = false, isSettingUp, hasReview
   const [retryVersion, setRetryVersion] = useState(0)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  const relevantIds = new Set(workspace?.focused && playback.playing && duration !== null && !videoError && !pendingFile
+    ? feedbackEntries.filter((entry) => entry.timestamp <= duration && isFeedbackRelevant(entry.timestamp, playback.time)).map((entry) => entry.id)
+    : [])
 
   useEffect(() => {
     const video = videoRef.current
@@ -216,6 +224,11 @@ function VideoReview({ remoteSource, isSuspended = false, isSettingUp, hasReview
           <>
             <VideoPlayer
               videoRef={videoRef}
+              relevantIds={relevantIds}
+              allowFullscreen={!isSettingUp}
+              onPlaybackChange={(time, playing) => setPlayback({ time, playing })}
+              onStartFeedback={handleStartFeedback}
+              canStartFeedback={!isSettingUp && duration !== null && !videoError && !pendingFile && timestamp === null}
               duration={duration}
               ready={duration !== null && videoError === "" && pendingFile === null}
               audioLocked={Boolean(remoteSource)}
@@ -226,6 +239,7 @@ function VideoReview({ remoteSource, isSuspended = false, isSettingUp, hasReview
               onSelectFeedback={(id) => {
                 const entry = feedbackEntries.find((entry) => entry.id === id)
                 if (!entry) return
+                workspace?.setNotesOpen(true)
                 if (categoryFilter !== "All" && categoryFilter !== entry.category) setCategoryFilter("All")
                 selectionRequest.current += 1
                 setSelectedFeedback({ id, request: selectionRequest.current })
@@ -234,7 +248,18 @@ function VideoReview({ remoteSource, isSuspended = false, isSettingUp, hasReview
           </>
         )}
       </div>
-      <div className="feedback-pane" tabIndex={0} role="region" aria-label="Feedback workspace">
+      <aside className="notes-drawer" aria-label="Review notes drawer" data-open={!workspace?.focused || workspace.notesOpen}>
+        {workspace?.focused && <button type="button" className="notes-drawer-handle notes-toggle"
+          aria-label={workspace.notesOpen ? "Hide review notes" : "Show review notes"}
+          title={workspace.notesOpen ? "Hide review notes" : "Show review notes"}
+          aria-expanded={workspace.notesOpen} aria-controls={`${prefix}-notes-pane`}
+          onClick={() => workspace.setNotesOpen(!workspace.notesOpen)}>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d={workspace.notesOpen ? "m9 6 6 6-6 6" : "m15 6-6 6 6 6"} />
+          </svg>
+        </button>}
+      <div id={`${prefix}-notes-pane`} className="feedback-pane" tabIndex={0} role="region" aria-label="Feedback workspace"
+        aria-hidden={workspace?.focused && !workspace.notesOpen || undefined} inert={workspace?.focused && !workspace.notesOpen || undefined}>
         {pendingFile && (
           <div className="removal-confirmation" role="group" aria-labelledby={`${prefix}-recording-mismatch`}>
             <p id={`${prefix}-recording-mismatch`} role="alert">
@@ -275,6 +300,7 @@ function VideoReview({ remoteSource, isSuspended = false, isSettingUp, hasReview
           <Alert>Some feedback timestamps exceed this recording's duration. Those moments cannot be sought; edit their timestamps or choose the original recording. Notes have been preserved.</Alert>
         )}
         {!isSettingUp && (videoFile || remoteSource || feedbackEntries.length > 0) && <FeedbackList
+          relevantIds={relevantIds}
           categoryFilter={categoryFilter}
           onCategoryFilterChange={(category) => { setCategoryFilter(category); setSelectedFeedback(null) }}
           selectedFeedback={selectedFeedback}
@@ -291,6 +317,7 @@ function VideoReview({ remoteSource, isSuspended = false, isSettingUp, hasReview
         />}
         {isSettingUp && <div className="setup-empty"><span className="section-kicker">Feedback</span><p>Set the scene. Then find the moments that matter.</p><span>Your timestamped notes will appear here once you start a review.</span></div>}
       </div>
+      </aside>
     </section>
   )
 }
